@@ -10,7 +10,7 @@ const MainRouter = () => {
         <Routes>
             <Route path="/" element={<Welcome />} />
             <Route path="/fridge/groceries" element={<Groceries />} />
-            <Route path="/fridge/item" element={<Item />} />
+            <Route path="/fridge/item/:id" element={<Item />} />
             <Route path="/fridge/log" element={<Log />} />
         </Routes>
     );
