@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "./Fridge_logo_png.png";
+import logo from "./Fridge_logo.png";
 
 const IntroPage = () => {
   const navigate = useNavigate();
