@@ -3,19 +3,16 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import IntroPage from "./IntroPage";
 import ItemsPage from "./ItemsPage";
 import FridgeLog from "./FridgeLog";
+import SingleItem from "./SingleItem";
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        {/* IntroPage */}
         <Route path="/" element={<IntroPage />} />
-
-        {/* ItemsPage */}
         <Route path="/items" element={<ItemsPage />} />
-
-        {/* FridgeLog */}
         <Route path="/fridgelog" element={<FridgeLog />} />
+        <Route path="/item/:id" element={<SingleItem />} />
       </Routes>
     </Router>
   );

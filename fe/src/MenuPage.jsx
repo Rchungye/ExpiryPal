@@ -56,7 +56,7 @@ const MenuPage = ({ onBackToItems }) => {
 
       {/* Save Changes Button */}
       <div className="flex justify-center mt-6">
-        <button className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200">
+        <button className="bg-blue-main text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-blue-main transition duration-200">
           Save changes
         </button>
       </div>
@@ -66,7 +66,7 @@ const MenuPage = ({ onBackToItems }) => {
         <h3 className="text-blue-main font-bold mb-8">View the Fridge Log</h3>
         <Link
           to="/fridgelog"
-          className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
+          className="bg-blue-main text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-blue-main transition duration-200"
         >
           Fridge Log
         </Link>

@@ -1,74 +1,10 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import MenuPage from "./MenuPage";
-
-import cola from "./assets/coca-cola-png-image-10.png";
-import eggs from "./assets/eggs.png";
-import julmust from "./assets/julmust.png";
-import mjolk from "./assets/mjolk.png";
-import pesto from "./assets/pesto.png";
-import pudding from "./assets/pudding.png";
-import pickleJar from "./assets/pickle-jar.png";
-
-const items = [
-  {
-    id: 1,
-    name: "CocaCola",
-    image: cola,
-    date: "19/08/24",
-    daysLeft: 7,
-    isNew: true,
-  },
-  {
-    id: 2,
-    name: "Eggs",
-    image: eggs,
-    date: "16/10/2024",
-    daysLeft: 4,
-    isNew: true,
-    warning: "orange",
-  },
-  {
-    id: 3,
-    name: "Julmust",
-    image: julmust,
-    date: "19/08/24",
-    daysLeft: 0,
-    expired: true,
-    warning: "red",
-  },
-  {
-    id: 4,
-    name: "Milk",
-    image: mjolk,
-    date: "19/08/24",
-    daysLeft: 4,
-    warning: "blue",
-  },
-  {
-    id: 5,
-    name: "Pesto",
-    image: pesto,
-    date: "19/08/24",
-    daysLeft: 4,
-  },
-  {
-    id: 6,
-    name: "Pudding",
-    image: pudding,
-    date: "19/08/24",
-    daysLeft: 4,
-  },
-  {
-    id: 7,
-    name: "Pickles",
-    image: pickleJar,
-    date: "19/08/24",
-    daysLeft: 4,
-  },
-];
+import items from "./ItemsData"; //Import items array
 
 const ItemsPage = () => {
-  const [menuOpen, setMenuOpen] = useState(false); // Menu burger
+  const [menuOpen, setMenuOpen] = useState(false); //Menu burger toggle
 
   const toggleMenu = () => {
     setMenuOpen((prev) => !prev);
@@ -84,7 +20,7 @@ const ItemsPage = () => {
         </button>
       </header>
 
-      {/* Sort Dropdown */}
+      {/* Dropdown */}
       <div className="flex items-center px-4 py-2 bg-gray-100">
         <label htmlFor="sort" className="text-lg font-bold text-gray-700 mr-2">
           Sort by:
@@ -103,9 +39,10 @@ const ItemsPage = () => {
       {/* Items Grid */}
       <div className="grid grid-cols-2 gap-4 p-4">
         {items.map((item) => (
-          <div
+          <Link
+            to={`/item/${item.id}`}
             key={item.id}
-            className={`bg-white rounded-lg shadow p-4 relative text-center ${
+            className={`bg-white rounded-lg shadow p-4 relative text-center block ${
               item.expired ? "border border-red-400" : ""
             }`}
           >
@@ -132,6 +69,7 @@ const ItemsPage = () => {
               </div>
             )}
 
+            {/* Item Details */}
             <img
               src={item.image}
               alt={item.name}
@@ -146,7 +84,7 @@ const ItemsPage = () => {
             >
               {item.daysLeft} days left
             </span>
-          </div>
+          </Link>
         ))}
       </div>
 

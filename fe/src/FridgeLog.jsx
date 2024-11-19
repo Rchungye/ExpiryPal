@@ -15,7 +15,7 @@ const FridgeLog = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen font-roboto">
-      <header className="bg-[#285D85] text-white p-4 relative flex items-center">
+      <header className="bg-blue-main text-white p-4 relative flex items-center">
         <button
           onClick={() => navigate("/items")}
           className="absolute left-4 text-3xl cursor-pointer"
@@ -29,8 +29,8 @@ const FridgeLog = () => {
       <div className="p-4">
         <p className="text-sm text-gray-700">
           Your unique ID:{" "}
-          <span className="font-bold text-[#285D85]">Petar2</span>
-          <span className="text-[#285D85] ml-1 cursor-pointer">✎</span>
+          <span className="font-bold text-blue-main">Petar2</span>
+          <span className="text-blue-main ml-1 cursor-pointer">✎</span>
         </p>
       </div>
 
@@ -41,7 +41,7 @@ const FridgeLog = () => {
             key={log.id}
             className="bg-white p-3 rounded shadow text-sm text-gray-700"
           >
-            <span className="font-bold text-[#285D85]">{log.user}</span>{" "}
+            <span className="font-bold text-blue-main">{log.user}</span>{" "}
             {log.action}
           </div>
         ))}
