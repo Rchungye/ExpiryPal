@@ -1,12 +1,8 @@
-from sqlalchemy import Column, Integer, String
 from flask_sqlalchemy import SQLAlchemy
+from . import db
 
-db = SQLAlchemy()
-class FridgeUser(db.Model):
-    __tablename__ = 'fridge_user'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    fridge_id = db.Column(db.Integer, db.ForeignKey('fridge.id'))
-
-    
-from .user import User
+fridge_user = db.Table(
+    'fridge_user',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('fridge_id', db.Integer, db.ForeignKey('fridge.id'), primary_key=True)
+)

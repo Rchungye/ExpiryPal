@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from flask_sqlalchemy import SQLAlchemy
+from . import db
 
-db = SQLAlchemy()
 
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+from .fridge_user import fridge_user
+from . import db
 
 class Fridge(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -10,7 +10,7 @@ class Fridge(db.Model):
     code = db.Column(db.String(50), unique=True)
     cameras = db.relationship('Camera', backref='fridge')
     items = db.relationship('Item', backref='fridge')
-    users = db.relationship('User', secondary='fridge_user', back_populates='fridges')
+    users = db.relationship('User', secondary=fridge_user, back_populates='fridges')
     
     def __init__(self, model, brand, code):
         self.model = model

@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+from . import db
 
 class Camera(db.Model):
     id = db.Column(db.Integer, primary_key=True)
