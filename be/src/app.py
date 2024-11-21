@@ -3,6 +3,9 @@ from models import db, ma
 from routes import user_routes, fridge_routes, item_routes
 
 app = Flask(__name__)
+# PRODUTION
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@127.0.0.1/expirypal'
+# DEV
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@127.0.0.1/expirypal'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
