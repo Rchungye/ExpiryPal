@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, func
 from flask_sqlalchemy import SQLAlchemy
 from . import db
 
@@ -7,6 +7,6 @@ class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     fridge_id = db.Column(db.Integer, db.ForeignKey('fridge.id'))
     name = db.Column(db.String(50))
-    addedDate = db.Column(db.Date)
+    addedDate = db.Column(db.Date, default=func.now())
     expirationDate = db.Column(db.Date)
     notifications = db.relationship('Notification', backref='item')

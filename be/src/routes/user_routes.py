@@ -1,10 +1,9 @@
 from flask import Blueprint, request
-from models import db, User
-from models import ma
+from models import db, ma, User
 
 user_routes = Blueprint('user_routes', __name__)
 
-class UserSchema(ma.Schema):
+class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         fields = ('id', 'username', 'unusedItemsPreference', 'expiryDatePreference')
 
