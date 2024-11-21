@@ -68,7 +68,7 @@ function Item() {
         </span>
         <span
           className={`text-sm font-semibold ${item.expired ? "text-red-600" : "text-gray-600"}`}>
-          {item.daysLeft} days left
+          {item.daysLeft} days ago
         </span>
 
         {/* Expiration Date */}
@@ -77,6 +77,10 @@ function Item() {
           <input type="date" value={expirationDate} onChange={(e) => setExpirationDate(e.target.value)}
             className="border rounded px-3 py-2 text-center w-50" />
         </div>
+        <span
+          className={`text-sm font-semibold ${item.expired ? "text-red-600" : "text-gray-600"}`}>
+          {item.daysLeft} days left
+        </span>
 
         {/* Actions */}
         <div className="flex justify-between mt-12">
