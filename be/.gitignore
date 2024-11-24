@@ -1,0 +1,10 @@
+#BE
+.env
+__pycache__
+be/virtualenv/
+be/virtualenv/*
+virtualenv
+be/instance/*
+instance
+be/migrations/*
+migrations
