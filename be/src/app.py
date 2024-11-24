@@ -1,6 +1,6 @@
 from flask import Flask
 from models import db, ma
-from routes import user_routes, fridge_routes, item_routes
+from routes import user_routes, fridge_routes, item_routes, camera_routes
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@127.0.0.1/expirypal'
@@ -16,6 +16,7 @@ with app.app_context():
 app.register_blueprint(user_routes)
 app.register_blueprint(fridge_routes)
 app.register_blueprint(item_routes)
+app.register_blueprint(camera_routes)
 
 if __name__ == "__main__":
     app.run(debug=True)
