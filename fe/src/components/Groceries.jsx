@@ -62,22 +62,60 @@ function Groceries() {
     return addedDate.getTime() === today.getTime();
   };
 
+  //Function to calculate days since the item was added
+  const calculateDaysSinceAdded = (dateAdded) => {
+    if (!dateAdded) {
+      return null;
+    }
+    const [day, month, year] = dateAdded.split("/").map(Number);
+    const addedDate = new Date(2000 + year, month - 1, day);
+    const today = new Date();
+
+    addedDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    const diffTime = today - addedDate;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays;
+  };
+
   return (
     <div className="bg-gray-100 min-h-screen font-roboto relative overflow-hidden">
-      <header className="bg-blue-main text-white flex justify-between items-center p-4">
-        <h1 className="text-3xl">ALL ITEMS</h1>
-        <button onClick={toggleNavBar} className="text-3xl cursor-pointer">
-          {navBarOpen ? "×" : "☰"}
-        </button>
+      <header className="bg-blue-main text-white">
+        <div className="max-w-[1024px] mx-auto p-4 flex justify-between items-center">
+          <h1 className="text-3xl">ALL ITEMS</h1>
+          <button onClick={toggleNavBar} className="text-3xl cursor-pointer">
+            {navBarOpen ? "×" : "☰"}
+          </button>
+        </div>
       </header>
 
       <div className="max-w-[1024px] mx-auto p-4">
+        {/* Dropdown */}
+        <div className="flex items-center px-4 py-2 bg-gray-100">
+          <label
+            htmlFor="sort"
+            className="text-lg font-bold text-gray-700 mr-2"
+          >
+            Sort by:
+          </label>
+          <select
+            id="sort"
+            className="border rounded px-3 py-2 bg-white shadow-sm focus:outline-none"
+            defaultValue="newest"
+          >
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="expiry-soon">Expiring Soon</option>
+          </select>
+        </div>
+
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
           {items.map((item) => {
             //Calculate daysLeft and expired dynamically
             const daysLeft = calculateDaysLeft(item.dateExp);
             let expired = daysLeft !== null ? daysLeft < 0 : false;
-
             //Calculate isNew
             const isNew = isItemNew(item.dateAdded);
             //Determine warning
@@ -87,7 +125,10 @@ function Groceries() {
             } else if (daysLeft !== null && daysLeft >= 0 && daysLeft <= 2) {
               warning = "orange";
             }
-            //blue warning left to calculate
+            const daysSinceAdded = calculateDaysSinceAdded(item.dateAdded);
+
+            //To dermine if blue warning should be
+            const blueWarning = daysSinceAdded !== null && daysSinceAdded > 5;
 
             return (
               <div
@@ -98,6 +139,8 @@ function Groceries() {
                     ? "border border-red-400"
                     : warning === "orange"
                     ? "border border-orange-400"
+                    : blueWarning
+                    ? "border  border-blue-400"
                     : ""
                 } cursor-pointer max-w-52`}
               >
@@ -113,12 +156,27 @@ function Groceries() {
                     !
                   </div>
                 )}
-                {warning === "orange" && (
-                  <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">
+                {warning === "orange" && !expired && (
+                  <div
+                    className="absolute top-2 right-2
+                     bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded"
+                  >
                     !
                   </div>
                 )}
-                {/* 'blue' warning cannot be calculated now */}
+                {blueWarning && (
+                  <div
+                    className={`absolute ${
+                      warning === "red"
+                        ? "top-2 right-8"
+                        : warning === "orange"
+                        ? "top-2 right-8"
+                        : "top-2 right-2"
+                    } bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded`}
+                  >
+                    !
+                  </div>
+                )}
 
                 <img
                   src={item.image}

@@ -15,14 +15,16 @@ const Log = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen font-roboto">
-      <header className="bg-[#285D85] text-white p-4 relative flex items-center">
-        <button
-          onClick={() => navigate("/fridge/groceries")}
-          className="absolute left-4 text-3xl cursor-pointer"
-        >
-          ←
-        </button>
-        <h1 className="text-3xl mx-auto">FRIDGE LOG</h1>
+      <header className="bg-blue-main text-white ">
+        <div className="max-w-[1024px] flex justify-between items-center p-4 relative mx-auto ">
+          <button
+            onClick={() => navigate("/fridge/groceries")}
+            className="absolute left-4 text-3xl cursor-pointer"
+          >
+            ←
+          </button>
+          <h1 className="text-3xl mx-auto">FRIDGE LOG</h1>
+        </div>
       </header>
 
       {/* Unique ID Section */}

@@ -6,11 +6,13 @@ const NavBar = ({ onBackToItems }) => {
   return (
     <div className="bg-gray-100 min-h-screen font-roboto">
       {/* Header */}
-      <header className="bg-blue-main text-white flex justify-between items-center p-4 relative">
-        <h1 className="text-3xl mx-auto">MENU</h1>
-        <button onClick={onBackToItems} className="absolute right-4 text-6xl">
-          ×
-        </button>
+      <header className="bg-blue-main text-white ">
+        <div className="max-w-[1024px] flex justify-between items-center p-4 relative mx-auto ">
+          <h1 className="text-3xl mx-auto">MENU</h1>
+          <button onClick={onBackToItems} className="absolute right-4 text-6xl">
+            ×
+          </button>
+        </div>
       </header>
 
       {/* Notification Settings */}

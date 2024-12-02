@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
+
 import PropTypes from "prop-types";
 
 function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
@@ -151,7 +152,33 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
     warningMessage =
       daysLeft === 0 ? "Item expires today!" : "Item is about to expire";
   }
-  //blue warning left to calculate
+  //Function to calculate days since the item was added
+  const calculateDaysSinceAdded = (dateAdded) => {
+    if (!dateAdded) {
+      return null;
+    }
+    const [day, month, year] = dateAdded.split("/").map(Number);
+    const addedDate = new Date(2000 + year, month - 1, day);
+    const today = new Date();
+
+    addedDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    const diffTime = today - addedDate;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays;
+  };
+
+  const daysSinceAdded = calculateDaysSinceAdded(item.dateAdded);
+
+  //To dermine if blue warning should be
+  const blueWarning = daysSinceAdded !== null && daysSinceAdded > 5;
+  //Blue warning message
+  let blueWarningMessage = "";
+  if (blueWarning) {
+    blueWarningMessage = `Item has not been used in ${daysSinceAdded} days`;
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -204,6 +231,8 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
                 ? "border border-red-400"
                 : warning === "orange"
                 ? "border border-orange-400"
+                : blueWarning
+                ? "border  border-blue-400"
                 : ""
             }`}
           >
@@ -226,16 +255,34 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
                 !
               </div>
             )}
-            {warning === "orange" && (
-              <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">
+            {warning === "orange" && !expired && (
+              <div
+                className="absolute top-2 right-2
+                     bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded"
+              >
                 !
               </div>
             )}
-            {/* blue warning left to calculate */}
+            {blueWarning && (
+              <div
+                className={`absolute ${
+                  warning === "red"
+                    ? "top-2 right-8"
+                    : warning === "orange"
+                    ? "top-2 right-8"
+                    : "top-2 right-2"
+                } bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded`}
+              >
+                !
+              </div>
+            )}
           </div>
           {/* Warning Message */}
           {warningMessage && (
             <p className={`mt-2 text-${warning}-600`}>{warningMessage}</p>
+          )}
+          {blueWarningMessage && (
+            <p className={`mt-2 text-blue-600`}>{blueWarningMessage}</p>
           )}
           {/*Item Info */}
           <div className="mt-4">
@@ -250,7 +297,6 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
               className="cursor-not-allowed text-gray-500 border rounded px-3 py-2 text-center w-50"
             />
           </div>
-
           {/* Expiration Date */}
           <div className="mt-6">
             <label className="block text-gray-700 font-bold mb-2">
@@ -272,7 +318,6 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
                 : `(${Math.abs(daysLeft)} days ago)`
               : `(Expiration N/A)`}
           </p>
-
           {/* Actions */}
           <div className="flex justify-between mt-12">
             <button
