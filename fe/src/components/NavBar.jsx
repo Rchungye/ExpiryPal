@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import PropTypes from "prop-types";
 
 const NavBar = ({ onBackToItems }) => {
   return (
@@ -13,66 +14,71 @@ const NavBar = ({ onBackToItems }) => {
       </header>
 
       {/* Notification Settings */}
-      <div className="p-4 text-center">
-        <h2 className="text-xl font-bold text-blue-main mb-2">
-          Notification Settings
-        </h2>
-        <div className="flex justify-center">
-          <img
-            src="https://img.icons8.com/ios-filled/50/285D85/bell.png"
-            alt="Notification Icon"
-            className="h-8"
-          />
+      <div className="max-w-[512px] mx-auto p-4">
+        <div className="p-4 text-center">
+          <h2 className="text-xl font-bold text-blue-main mb-2">
+            Notification Settings
+          </h2>
+          <div className="flex justify-center">
+            <img
+              src="https://img.icons8.com/ios-filled/50/285D85/bell.png"
+              alt="Notification Icon"
+              className="h-8"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Expiration Notification */}
-      <div className="bg-white p-4 mt-4 shadow ml-4 mr-4 rounded">
-        <h3 className="font-bold text-lg text-gray-800">Expiration:</h3>
-        <p className="text-sm text-gray-700">
-          Notify me
-          <input
-            type="number"
-            className="mx-2 border rounded px-2 py-1 text-center w-12"
-            defaultValue={3}
-          />
-          days before expiration.
-        </p>
-      </div>
+        {/* Expiration Notification */}
+        <div className="bg-white p-4 mt-4 shadow ml-4 mr-4 rounded">
+          <h3 className="font-bold text-lg text-gray-800">Expiration:</h3>
+          <p className="text-sm text-gray-700">
+            Notify me
+            <input
+              type="number"
+              className="mx-2 border rounded px-2 py-1 text-center w-12"
+              defaultValue={3}
+            />
+            days before expiration.
+          </p>
+        </div>
 
-      {/* Unused Item Notification */}
-      <div className="bg-white p-4 mt-4 shadow ml-4 mr-4 rounded">
-        <h3 className="font-bold text-lg text-gray-800">Unused item:</h3>
-        <p className="text-sm text-gray-700">
-          Notify me if the item has not been used in
-          <input
-            type="number"
-            className="mx-2 border rounded px-2 py-1 text-center w-12"
-            defaultValue={7}
-          />
-          days.
-        </p>
-      </div>
+        {/* Unused Item Notification */}
+        <div className="bg-white p-4 mt-4 shadow ml-4 mr-4 rounded">
+          <h3 className="font-bold text-lg text-gray-800">Unused item:</h3>
+          <p className="text-sm text-gray-700">
+            Notify me if the item has not been used in
+            <input
+              type="number"
+              className="mx-2 border rounded px-2 py-1 text-center w-12"
+              defaultValue={7}
+            />
+            days.
+          </p>
+        </div>
 
-      {/* Save Changes Button */}
-      <div className="flex justify-center mt-6">
-        <button className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200">
-          Save changes
-        </button>
-      </div>
+        {/* Save Changes Button */}
+        <div className="flex justify-center mt-6">
+          <button className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200">
+            Save changes
+          </button>
+        </div>
 
-      {/* Fridge Log Section */}
-      <div className="mt-8 text-center">
-        <h3 className="text-blue-main font-bold mb-8">View the Fridge Log</h3>
-        <Link
-          to="/fridge/log"
-          className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
-        >
-          Fridge Log
-        </Link>
+        {/* Fridge Log Section */}
+        <div className="mt-8 text-center">
+          <h3 className="text-blue-main font-bold mb-8">View the Fridge Log</h3>
+          <Link
+            to="/fridge/log"
+            className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
+          >
+            Fridge Log
+          </Link>
+        </div>
       </div>
     </div>
   );
+};
+NavBar.propTypes = {
+  onBackToItems: PropTypes.func.isRequired,
 };
 
 export default NavBar;

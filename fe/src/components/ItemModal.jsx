@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-
+import Swal from "sweetalert2";
 import PropTypes from "prop-types";
 
 function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
   const [expirationDate, setExpirationDate] = useState(item.dateExp || "");
-  const [itemName, setItemName] = useState(item.name || "");
+  const [itemName, setItemName] = useState(item.name || "Item" + item.id);
   const [isEditingName, setIsEditingName] = useState(false);
   const modalRef = useRef();
 
@@ -120,15 +120,27 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
     //Call the update function
     onUpdateItem(updatedItem);
 
-    alert("Changes saved!");
-    onClose();
+    Swal.fire({
+      title: "Success!",
+      text: "Changes saved!",
+      icon: "success",
+      confirmButtonColor: "#285D85",
+    }).then(() => {
+      onClose();
+    });
   };
 
   const handleRemove = () => {
     //Call the remove function
     onRemoveItem(item.id);
-    alert("Item removed!");
-    onClose();
+    Swal.fire({
+      title: "Success!",
+      text: "Item removed!",
+      icon: "success",
+      confirmButtonColor: "#285D85",
+    }).then(() => {
+      onClose();
+    });
   };
 
   //Determine warning message
@@ -223,7 +235,7 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
           </div>
           {/* Warning Message */}
           {warningMessage && (
-            <p className={`mt-2 text-${warning}-500`}>{warningMessage}</p>
+            <p className={`mt-2 text-${warning}-600`}>{warningMessage}</p>
           )}
           {/*Item Info */}
           <div className="mt-4">

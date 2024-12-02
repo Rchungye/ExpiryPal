@@ -71,85 +71,86 @@ function Groceries() {
         </button>
       </header>
 
-      <div className="grid grid-cols-2 gap-4 p-4">
-        {items.map((item) => {
-          //Calculate daysLeft and expired dynamically
-          const daysLeft = calculateDaysLeft(item.dateExp);
-          let expired = daysLeft !== null ? daysLeft < 0 : false;
+      <div className="max-w-[1024px] mx-auto p-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
+          {items.map((item) => {
+            //Calculate daysLeft and expired dynamically
+            const daysLeft = calculateDaysLeft(item.dateExp);
+            let expired = daysLeft !== null ? daysLeft < 0 : false;
 
-          //Calculate isNew
-          const isNew = isItemNew(item.dateAdded);
-          //Determine warning
-          let warning = "";
-          if (expired) {
-            warning = "red";
-          } else if (daysLeft !== null && daysLeft >= 0 && daysLeft <= 2) {
-            warning = "orange";
-          }
-          //blue warning left to calculate
+            //Calculate isNew
+            const isNew = isItemNew(item.dateAdded);
+            //Determine warning
+            let warning = "";
+            if (expired) {
+              warning = "red";
+            } else if (daysLeft !== null && daysLeft >= 0 && daysLeft <= 2) {
+              warning = "orange";
+            }
+            //blue warning left to calculate
 
-          return (
-            <div
-              key={item.id}
-              onClick={() => handleItemClick(item)}
-              className={`bg-white rounded-lg shadow p-4 relative text-center ${
-                expired
-                  ? "border border-red-400"
-                  : warning === "orange"
-                  ? "border border-orange-400"
-                  : ""
-              } cursor-pointer`}
-            >
-              {isNew && (
-                <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
-                  NEW
-                </div>
-              )}
-
-              {/* Warning Badges */}
-              {warning === "red" && (
-                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                  !
-                </div>
-              )}
-              {warning === "orange" && (
-                <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">
-                  !
-                </div>
-              )}
-              {/* 'blue' warning cannot be calculated now */}
-
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-full h-24 object-contain rounded mb-3"
-              />
-              <p className="font-semibold">{item.name}</p>
-
-              <span className="text-gray-500 text-sm block">
-                {item.dateExp ? item.dateExp : "Expiration N/A"}
-              </span>
-
-              <span
-                className={`text-sm font-semibold ${
+            return (
+              <div
+                key={item.id}
+                onClick={() => handleItemClick(item)}
+                className={`bg-white rounded-lg shadow p-4 relative text-center ${
                   expired
-                    ? "text-red-600"
+                    ? "border border-red-400"
                     : warning === "orange"
-                    ? "text-orange-600"
-                    : "text-gray-600"
-                }`}
+                    ? "border border-orange-400"
+                    : ""
+                } cursor-pointer max-w-52`}
               >
-                {daysLeft !== null
-                  ? daysLeft === 0
-                    ? "Expires today"
-                    : `${Math.abs(daysLeft)} days ${expired ? "ago" : "left"}`
-                  : "N/A"}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+                {isNew && (
+                  <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    NEW
+                  </div>
+                )}
 
+                {/* Warning Badges */}
+                {warning === "red" && (
+                  <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    !
+                  </div>
+                )}
+                {warning === "orange" && (
+                  <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    !
+                  </div>
+                )}
+                {/* 'blue' warning cannot be calculated now */}
+
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-24 object-contain rounded mb-3"
+                />
+                <p className="font-semibold">{item.name || "Item" + item.id}</p>
+
+                <span className="text-gray-500 text-sm block">
+                  {item.dateExp ? item.dateExp : "Expiration N/A"}
+                </span>
+
+                <span
+                  className={`text-sm font-semibold ${
+                    expired
+                      ? "text-red-600"
+                      : warning === "orange"
+                      ? "text-orange-600"
+                      : "text-gray-600"
+                  }`}
+                >
+                  {daysLeft !== null
+                    ? daysLeft === 0
+                      ? "Expires today"
+                      : `${Math.abs(daysLeft)} days ${expired ? "ago" : "left"}`
+                    : "N/A"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
       {/* Sliding NavBar */}
       <div
         className={`fixed top-0 right-0 h-full w-full bg-white transform transition-transform duration-300 ease-in-out ${

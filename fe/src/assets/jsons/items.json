@@ -2,10 +2,10 @@
   "items": [
     {
       "id": 1,
-      "name": "Item1",
+      "name": "",
       "image": "/items/coca_cola.png",
       "dateExp": "",
-      "dateAdded": "01/12/24"
+      "dateAdded": "02/12/24"
     },
     {
       "id": 2,
