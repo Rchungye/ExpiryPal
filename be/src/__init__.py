@@ -1,5 +1,6 @@
+from functools import wraps
 import os
-from flask import Flask
+from flask import Flask, Blueprint
 from src.config import config
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
@@ -21,7 +22,7 @@ CORS(app, supports_credentials=True)
 
 from src.routes.camera_routes import *
 from src.routes.fridge_routes import *
-from src.routes.fridgeLog_routes import *
+from src.routes.item_routes import *
 from src.routes.item_routes import *
 from src.routes.notification_routes import *
 from src.routes.user_routes import *
