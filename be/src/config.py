@@ -14,5 +14,5 @@ class DevelopmentConfig(Config):
 
 
 config = {
-    "envConfig": DevelopmentConfig,
+    "ambiente": DevelopmentConfig,
 }
