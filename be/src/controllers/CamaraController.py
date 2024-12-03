@@ -7,3 +7,4 @@ def GetAllCameras():
     cameras = Camera.query.all()
     return ControllerObject(
         payload=[camera.as_dict() for camera in cameras], status=200)
+

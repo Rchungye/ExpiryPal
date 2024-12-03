@@ -11,3 +11,6 @@ class Item(db.Model):
     addedDate = db.Column(db.Date, default=func.now())
     expirationDate = db.Column(db.Date)
 
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}

@@ -17,3 +17,5 @@ class Fridge(db.Model):
     items = db.relationship('Item', backref='fridge')
     users = db.relationship('User', secondary=fridge_user, back_populates='fridges')
     
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
