@@ -2,6 +2,7 @@ from . import ControllerObject
 from datetime import datetime, date
 from src import app, db
 from src.models.notificationPreferences import NotificationPreferences as np
+from src.schemas.notificationPreferencesSchema import NotificationPreferencesSchema
 
 def GetAllNotificationPreferences():
     nps = np.query.all()
@@ -29,20 +30,52 @@ def GetNotificationPreferencesByFridgeId(fridge_id):
     return ControllerObject(payload=preferences.as_dict(), status=200)
 
 
+def save_preferences(data):
+    schema = NotificationPreferencesSchema()
 
-# np = notificationPreferences
-# nps = notificationPreferences.query.all()
+    # validate the data received from the client
+    errors = schema.validate(data)
+    if errors:
+        return {
+            "success": False,
+            "message": "Validation errors",
+            "errors": errors
+        }, 400
 
-def save_preferences(expiration_days, unused_days, fridge_id):
+    fridge_id = data["fridge_id"]
+    expiration = data["expiration"]
+    unusedItem = data["unusedItem"]
+
     try:
-        query = """
-        INSERT INTO notification_preferences (fridge_id, expiration, unusedItem)
-        VALUES (%s, %s, %s)
-        ON DUPLICATE KEY UPDATE expiration = %s, unusedItem = %s
-        """
-        
-        db.execute(query, (fridge_id, expiration_days, unused_days, expiration_days, unused_days))
-        return True
+        # look for existing preferences
+        preferences = np.query.get(fridge_id)
+
+        if preferences:
+            # if exist, update the existing preferences
+            preferences.expiration = expiration
+            preferences.unusedItem = unusedItem
+        else:
+            # if not, create new preferences
+            preferences = np(
+                fridge_id=fridge_id,
+                expiration=expiration,
+                unusedItem=unusedItem,
+            )
+            db.session.add(preferences)
+
+        db.session.commit()
+
+        return {
+            "success": True,
+            "message": "Preferences saved successfully.",
+            "data": preferences.as_dict()
+        }, 200
+
     except Exception as e:
+        db.session.rollback()
         print(f"Error saving preferences: {e}")
-        return False
+        return {
+            "success": False,
+            "message": "Internal server error",
+            "error": str(e)
+        }, 500

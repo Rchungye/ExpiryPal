@@ -1,3 +1,4 @@
+from src.models.user import User
 from src import app
 import json
 from flask import jsonify, request
@@ -44,3 +45,11 @@ def GetNotificationPreferencesByFridgeId(fridge_id):
 
     result = Fridge.GetNotificationPreferencesByFridgeId(fridge_id)
     return jsonify(result)
+
+@app.route('/link', methods=['POST'])
+def link_user_to_fridge():
+    data = request.json
+    code = data.get('code')
+    username = data.get('username', 'Anonymous')
+    result = Fridge.link_user_to_fridge(code, username)
+    return result.jsonify()

@@ -1,6 +1,7 @@
 from src import db
 from datetime import datetime
 
+
 class NotificationPreferences(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     fridge_id = db.Column(db.Integer, db.ForeignKey('fridge.id'), unique=True)
@@ -9,3 +10,4 @@ class NotificationPreferences(db.Model):
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+    
