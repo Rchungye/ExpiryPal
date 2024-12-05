@@ -8,11 +8,10 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    # DEV
-    SQLALCHEMY_DATABASE_URI = os.getenv("DB_CONN")
+    SQLALCHEMY_DATABASE_URI = os.getenv("DB_CONN") ##### DATABASE CONNECTION SETTING #####
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 config = {
-    "ambiente": DevelopmentConfig,
+    "envConfig": DevelopmentConfig,
 }
