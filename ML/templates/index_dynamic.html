@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Comparison</title>
+    <script>
+        async function uploadImages(event) {
+            event.preventDefault();
+
+            const formData = new FormData();
+            const image1 = document.getElementById("image1").files[0];
+            const image2 = document.getElementById("image2").files[0];
+
+            if (!image1 || !image2) {
+                alert("Please select both images!");
+                return;
+            }
+
+            formData.append("image1", image1);
+            formData.append("image2", image2);
+
+            try {
+                const response = await fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(error.error);
+                    return;
+                }
+
+                const data = await response.json();
+                displayResults(data.added_items, data.removed_items, data.added_images, data.removed_images, data.available_items);
+            } catch (error) {
+                console.error("Error uploading images:", error);
+                alert("An error occurred while uploading images.");
+            }
+        }
+
+        function displayResults(addedItems, removedItems, addedImages, removedImages, availableItems) {
+            const addedItemsList = document.getElementById("added-items");
+            const removedItemsList = document.getElementById("removed-items");
+            const availableItemsList = document.getElementById("available-items");
+
+            // Populate added items
+            addedItemsList.innerHTML = addedItems.length ?
+                addedItems.map(item => `<li>${item}</li>`).join('') : '<p>No items added.</p>';
+
+            // Populate removed items
+            removedItemsList.innerHTML = removedItems.length ?
+                removedItems.map(item => `<li>${item}</li>`).join('') : '<p>No items removed.</p>';
+
+            // Populate available items
+            availableItemsList.innerHTML = availableItems.length ?
+                availableItems.map(item => `<img src="${item}" alt="Available Item" style="width: 200px; margin: 10px;">`).join('') :
+                '<p>No items available from the second image.</p>';
+
+            // Display added images
+            const addedImagesContainer = document.getElementById("added-images");
+            addedImagesContainer.innerHTML = addedImages.map(img => `<img src="${img}" alt="Added Image" style="width: 200px; margin: 10px;">`).join('');
+
+            // Display removed images
+            const removedImagesContainer = document.getElementById("removed-images");
+            removedImagesContainer.innerHTML = removedImages.map(img => `<img src="${img}" alt="Removed Image" style="width: 200px; margin: 10px;">`).join('');
+        }
+    </script>
+</head>
+<body>
+    <h1>Image Comparison</h1>
+    <form onsubmit="uploadImages(event)">
+        <input type="file" id="image1" required>
+        <input type="file" id="image2" required>
+        <button type="submit">Upload and Compare</button>
+    </form>
+
+    <h2>Added Items</h2>
+    <ul id="added-items"></ul>
+    <div id="added-images"></div>
+
+    <h2>Removed Items</h2>
+    <ul id="removed-items"></ul>
+    <div id="removed-images"></div>
+
+    <h2>Available Items</h2>
+    <div id="available-items"></div>
+</body>
+</html>
