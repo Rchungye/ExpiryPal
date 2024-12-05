@@ -3,7 +3,7 @@ from src import app
 import json
 from flask import jsonify, request
 from src.controllers import (
-    fridgeController as Fridge,
+    FridgeController as Fridge,
 )
 
 
