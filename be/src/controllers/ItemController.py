@@ -1,3 +1,3 @@
 from . import ControllerObject
-from src.models.item import Item
+from src.models.Item import Item
 

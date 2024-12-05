@@ -1,3 +1,3 @@
 from . import ControllerObject
-from src.models.camera import Camera
+from src.models.Camera import Camera
 

@@ -1,3 +1,3 @@
 from . import ControllerObject
-from src.models.fridge import Fridge
+from src.models.Fridge import Fridge
 
