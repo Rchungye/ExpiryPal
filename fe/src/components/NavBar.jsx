@@ -1,7 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Link } from "react-router-dom";
+import { saveNotificationPreferences } from "../services/notificationService";
 
 const NavBar = ({ onBackToItems }) => {
+  const [expirationDays, setExpirationDays] = useState(3);
+  const [unusedDays, setUnusedDays] = useState(7);
+
+  const handleSaveChanges = async () => {
+    const payload = {
+      expiration: expirationDays,
+      unusedItem: unusedDays,
+      fridge_id: 1,
+    };
+
+    try {
+      await saveNotificationPreferences(payload);
+      alert("Notification preferences saved successfully!");
+    } catch (error) {
+      alert("Failed to save notification preferences.", error);
+    }
+  };
+
   return (
     <div className="bg-gray-100 min-h-screen font-roboto">
       {/* Header */}
@@ -34,7 +54,8 @@ const NavBar = ({ onBackToItems }) => {
           <input
             type="number"
             className="mx-2 border rounded px-2 py-1 text-center w-12"
-            defaultValue={3}
+            value={expirationDays}
+            onChange={(e) => setExpirationDays(parseInt(e.target.value, 10))}
           />
           days before expiration.
         </p>
@@ -48,7 +69,8 @@ const NavBar = ({ onBackToItems }) => {
           <input
             type="number"
             className="mx-2 border rounded px-2 py-1 text-center w-12"
-            defaultValue={7}
+            value={unusedDays}
+            onChange={(e) => setUnusedDays(parseInt(e.target.value, 10))}
           />
           days.
         </p>
@@ -56,7 +78,8 @@ const NavBar = ({ onBackToItems }) => {
 
       {/* Save Changes Button */}
       <div className="flex justify-center mt-6">
-        <button className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200">
+        <button className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
+        onClick={handleSaveChanges}>
           Save changes
         </button>
       </div>
@@ -73,6 +96,9 @@ const NavBar = ({ onBackToItems }) => {
       </div>
     </div>
   );
+};
+NavBar.propTypes = {
+  onBackToItems: PropTypes.func.isRequired,
 };
 
 export default NavBar;
