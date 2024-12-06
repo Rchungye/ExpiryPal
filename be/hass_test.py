@@ -6,7 +6,7 @@ load_dotenv()
 
 client = Client(
     'https://hass.mdu-smartroom.se/api',
-    os.getenv("API_KEY")
+    os.getenv("HASS_API_KEY")
 )
 
 
