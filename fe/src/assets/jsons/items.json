@@ -1,59 +1,53 @@
 {
-    "items": [
-        {
-            "id": 1,
-            "name": "CocaCola",
-            "image": "/items/coca_cola.png",
-            "date": "19/08/24",
-            "daysLeft": 7,
-            "isNew": true
-        },
-        {
-            "id": 2,
-            "name": "Eggs",
-            "image": "/items/eggs.png",
-            "date": "16/10/2024",
-            "daysLeft": 4,
-            "isNew": true,
-            "warning": "orange"
-        },
-        {
-            "id": 3,
-            "name": "Julmust",
-            "image": "/items/julmust.png",
-            "date": "19/08/24",
-            "daysLeft": 0,
-            "expired": true,
-            "warning": "red"
-        },
-        {
-            "id": 4,
-            "name": "Milk",
-            "image": "/items/mjolk.png",
-            "date": "19/08/24",
-            "daysLeft": 4,
-            "warning": "blue"
-        },
-        {
-            "id": 5,
-            "name": "Pesto",
-            "image": "/items/pesto.png",
-            "date": "19/08/24",
-            "daysLeft": 4
-        },
-        {
-            "id": 6,
-            "name": "Pudding",
-            "image": "/items/pudding.png",
-            "date": "19/08/24",
-            "daysLeft": 4
-        },
-        {
-            "id": 7,
-            "name": "Pickles",
-            "image": "/items/pickle_jar.png",
-            "date": "19/08/24",
-            "daysLeft": 4
-        }
-    ]
+  "items": [
+    {
+      "id": 1,
+      "name": "",
+      "image": "/items/coca_cola.png",
+      "dateExp": "",
+      "dateAdded": "02/12/24"
+    },
+    {
+      "id": 2,
+      "name": "Eggs",
+      "image": "/items/eggs.png",
+      "dateExp": "02/12/24",
+      "dateAdded": "16/11/24"
+    },
+    {
+      "id": 3,
+      "name": "Julmust",
+      "image": "/items/julmust.png",
+      "dateExp": "19/02/25",
+      "dateAdded": "16/10/24"
+    },
+    {
+      "id": 4,
+      "name": "Milk",
+      "image": "/items/mjolk.png",
+      "dateExp": "19/08/25",
+      "dateAdded": "01/12/24"
+    },
+    {
+      "id": 5,
+      "name": "Pesto",
+      "image": "/items/pesto.png",
+      "dateExp": "19/08/25",
+      "dateAdded": "16/10/24"
+    },
+    {
+      "id": 6,
+      "name": "Pudding",
+      "image": "/items/pudding.png",
+      "dateExp": "19/08/24",
+      "dateAdded": "16/10/24"
+    },
+    {
+      "id": 7,
+      "name": "Pickles",
+      "image": "/items/pickle_jar.png",
+      "dateExp": "19/08/24",
+      "dateAdded": "16/10/24"
+    }
+  ]
 }

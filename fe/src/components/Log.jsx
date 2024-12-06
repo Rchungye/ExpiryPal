@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import { useNavigate } from "react-router-dom";
 
 const Log = () => {
@@ -15,33 +15,40 @@ const Log = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen font-roboto">
-      <header className="bg-[#285D85] text-white p-4 relative flex items-center">
-        <button onClick={() => navigate("/fridge/groceries")} className="absolute left-4 text-3xl cursor-pointer">
-          ←
-        </button>
-        <h1 className="text-3xl mx-auto">FRIDGE LOG</h1>
+      <header className="bg-blue-main text-white ">
+        <div className="max-w-[1024px] flex justify-between items-center p-4 relative mx-auto ">
+          <button
+            onClick={() => navigate("/fridge/groceries")}
+            className="absolute left-4 text-3xl cursor-pointer"
+          >
+            ←
+          </button>
+          <h1 className="text-3xl mx-auto">FRIDGE LOG</h1>
+        </div>
       </header>
 
       {/* Unique ID Section */}
-      <div className="p-4">
-        <p className="text-sm text-gray-700">
-          Your unique ID:{" "}
-          <span className="font-bold text-[#285D85]">Petar2</span>
-          <span className="text-[#285D85] ml-1 cursor-pointer">✎</span>
-        </p>
-      </div>
+      <div className="max-w-[512px] mx-auto p-4">
+        <div className="p-4">
+          <p className="text-sm text-gray-700">
+            Your unique ID:{" "}
+            <span className="font-bold text-[#285D85]">Petar2</span>
+            <span className="text-[#285D85] ml-1 cursor-pointer">✎</span>
+          </p>
+        </div>
 
-      {/* Log List */}
-      <div className="p-4 space-y-4">
-        {logs.map((log) => (
-          <div
-            key={log.id}
-            className="bg-white p-3 rounded shadow text-sm text-gray-700"
-          >
-            <span className="font-bold text-[#285D85]">{log.user}</span>{" "}
-            {log.action}
-          </div>
-        ))}
+        {/* Log List */}
+        <div className="p-4 space-y-4">
+          {logs.map((log) => (
+            <div
+              key={log.id}
+              className="bg-white p-3 rounded shadow text-sm text-gray-700"
+            >
+              <span className="font-bold text-[#285D85]">{log.user}</span>{" "}
+              {log.action}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

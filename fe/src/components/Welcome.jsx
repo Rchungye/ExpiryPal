@@ -1,6 +1,6 @@
-import React from 'react'
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import logo from '../assets/Fridge_logo.png'
+import logo from "../assets/Fridge_logo.png";
 
 function Welcome() {
   const navigate = useNavigate();
@@ -26,4 +26,4 @@ function Welcome() {
   );
 }
 
-export default Welcome
+export default Welcome;
