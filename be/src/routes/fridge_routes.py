@@ -1,38 +1,55 @@
-from flask import Blueprint, request
-from models import db, Fridge
-from models import ma
+from src.models.user import User
+from src import app
+import json
+from flask import jsonify, request
+from src.controllers import (
+    FridgeController as Fridge,
+)
 
-fridge_routes = Blueprint('fridge_routes', __name__)
 
-class FridgeSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        fields = ('id', 'model', 'brand', 'code')
+@app.route("/fridge/all", methods=["GET"])
+def GetAllFridges():
+    result = Fridge.GetAllFridges()
+    return result.jsonify()
 
-fridge_schema = FridgeSchema()
-fridges_schema = FridgeSchema(many=True)
+@app.route("/fridges/<int:fridge_id>/cameras", methods=["GET"])
+def GetCamerasByFridgeId(fridge_id):
+    """
+    Route handler for GET /fridges/<fridge_id>/cameras
 
-@fridge_routes.route('/fridges', methods=['POST'])
-def add_fridge():
+    Retrieves cameras associated with a specific fridge.
+
+    Args:
+        fridge_id (int): The ID of the fridge in the URL path.
+
+    Returns:
+        JSON: A JSON response containing the camera data and status code.
+    """
+
+    result = Fridge.GetCamerasByFridgeId(fridge_id)
+    return jsonify(result)
+
+@app.route("/fridges/<int:fridge_id>/notificationPreferences", methods=["GET"])
+def GetNotificationPreferencesByFridgeId(fridge_id):
+    """
+    Route handler for GET /fridges/<fridge_id>/notificationPreferences
+
+    Retrieves the notification preferences for a specific fridge.
+
+    Args:
+        fridge_id (int): The ID of the fridge in the URL path.
+
+    Returns:
+        JSON: A JSON response containing the notification preferences data and status code.
+    """
+
+    result = Fridge.GetNotificationPreferencesByFridgeId(fridge_id)
+    return jsonify(result)
+
+@app.route('/link', methods=['POST'])
+def link_user_to_fridge():
     data = request.json
-    if not all(key in data for key in ['model', 'brand', 'code']):
-        return {"error": "Missing required fields"}, 400
-
-    model = data['model']
-    brand = data['brand']
-    code = data['code']
-
-    if Fridge.query.filter_by(code=code).first():
-        return {"error": "Fridge code already exists"}, 400
-
-    new_fridge = Fridge(model, brand, code)
-
-    db.session.add(new_fridge)
-    db.session.commit()
-    return fridge_schema.jsonify(new_fridge), 201
-
-
-@fridge_routes.route('/fridges', methods=['GET'])
-def get_fridges():
-    all_fridges = Fridge.query.all()
-    result = fridges_schema.dump(all_fridges)
-    return {"fridges": result}, 200
+    code = data.get('code')
+    username = data.get('username', 'Anonymous')
+    result = Fridge.link_user_to_fridge(code, username)
+    return result.jsonify()
