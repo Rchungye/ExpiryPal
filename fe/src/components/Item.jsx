@@ -26,7 +26,10 @@ function Item() {
     <div className="bg-gray-100 min-h-screen font-roboto relative overflow-hidden">
       {/* Header */}
       <header className="bg-blue-main text-white flex justify-between items-center p-4">
-        <button onClick={() => navigate("/fridge/groceries")} className="absolute left-4 text-3xl cursor-pointer">
+        <button
+          onClick={() => navigate("/fridge/groceries")}
+          className="absolute left-4 text-3xl cursor-pointer"
+        >
           ←
         </button>
         <h1 className="text-3xl mx-auto">ITEM</h1>
@@ -40,11 +43,15 @@ function Item() {
         </div>
 
         {/* Image and Basic Info */}
-        <div className={`bg-white rounded-lg shadow p-4 relative inline-block
-          ${item.expired ? "border border-red-400" : ""}`}>
-
-          <img src={item.image} alt={item.name}
-            className="w-40 h-40 object-contain mx-auto mb-3" />
+        <div
+          className={`bg-white rounded-lg shadow p-4 relative inline-block
+          ${item.expired ? "border border-red-400" : ""}`}
+        >
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-40 h-40 object-contain mx-auto mb-3"
+          />
 
           {item.isNew && (
             <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
@@ -63,22 +70,38 @@ function Item() {
           <label className="block text-gray-700 font-bold mb-2">
             Date added:
           </label>
-          <input type="text" value={item.date} readOnly
-            className="cursor-not-allowed text-gray-500 border rounded px-3 py-2 text-center w-50" />
+          <input
+            type="text"
+            value={item.date}
+            readOnly
+            className="cursor-not-allowed text-gray-500 border rounded px-3 py-2 text-center w-50"
+          />
         </span>
         <span
-          className={`text-sm font-semibold ${item.expired ? "text-red-600" : "text-gray-600"}`}>
+          className={`text-sm font-semibold ${
+            item.expired ? "text-red-600" : "text-gray-600"
+          }`}
+        >
           {item.daysLeft} days ago
         </span>
 
         {/* Expiration Date */}
         <div className="mt-6">
-          <label className="block text-gray-700 font-bold mb-2">Expiration date:</label>
-          <input type="date" value={expirationDate} onChange={(e) => setExpirationDate(e.target.value)}
-            className="border rounded px-3 py-2 text-center w-50" />
+          <label className="block text-gray-700 font-bold mb-2">
+            Expiration date:
+          </label>
+          <input
+            type="date"
+            value={expirationDate}
+            onChange={(e) => setExpirationDate(e.target.value)}
+            className="border rounded px-3 py-2 text-center w-50"
+          />
         </div>
         <span
-          className={`text-sm font-semibold ${item.expired ? "text-red-600" : "text-gray-600"}`}>
+          className={`text-sm font-semibold ${
+            item.expired ? "text-red-600" : "text-gray-600"
+          }`}
+        >
           {item.daysLeft} days left
         </span>
 
@@ -97,7 +120,6 @@ function Item() {
             Save changes
           </button>
         </div>
-
       </div>
     </div>
   );
