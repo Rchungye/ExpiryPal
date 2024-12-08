@@ -3,6 +3,7 @@ from datetime import datetime
 
 
 class NotificationPreferences(db.Model):
+    __tablename__ = 'notificationPreferences'
     id = db.Column(db.Integer, primary_key=True)
     fridge_id = db.Column(db.Integer, db.ForeignKey('fridge.id'), unique=True)
     expiration = db.Column(db.Integer)  # Notify me x days before expiration

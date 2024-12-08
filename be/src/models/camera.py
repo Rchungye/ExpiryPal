@@ -6,6 +6,7 @@ class Camera(db.Model):
     fridge_id = db.Column(db.Integer, db.ForeignKey('fridge.id'))
     model = db.Column(db.String(50))
     brand = db.Column(db.String(50))
+    entity_id = db.Column(db.String(2048))
     accessURL = db.Column(db.String(2048))
     
     def as_dict(self):
