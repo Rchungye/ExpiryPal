@@ -8,6 +8,8 @@ be/instance/*
 instance
 be/migrations/*
 migrations
+ML/venv
+ML/venv/*
 
 ML/clip-vit-base-patch32/
 ML/clip-vit-base-patch32/*

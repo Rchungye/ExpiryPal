@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from flask import Flask
 from src.config import config
 from flask_cors import CORS
@@ -11,6 +12,7 @@ from flask_apscheduler import APScheduler
 APP_ROOT = os.path.join(os.path.dirname(__file__), "..")
 dotenv_path = os.path.join(APP_ROOT, ".env")
 load_dotenv(dotenv_path)
+
 app = Flask(__name__)
 enviroment = config["envConfig"]
 app.config.from_object(enviroment)
