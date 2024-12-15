@@ -1,0 +1,16 @@
+#BE
+.env
+__pycache__
+be/virtualenv/
+be/virtualenv/*
+virtualenv
+be/instance/*
+instance
+be/migrations/*
+migrations
+
+ML/clip-vit-base-patch32/
+ML/clip-vit-base-patch32/*
+clip-vit-base-patch32
+ML/yolov8x-seg.pt
+yolov8x-seg.pt

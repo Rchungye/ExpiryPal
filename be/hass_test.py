@@ -10,8 +10,11 @@ client = Client(
 )
 
 
+print(client.get_entity(entity_id="camera.192_168_8_125"))
 state = client.get_entity(entity_id="camera.192_168_8_125").get_state()
+# print(state)
 state = dict(state)
+# print(state)
 token = state['attributes']['access_token']
 urlCam = 'https://hass.mdu-smartroom.se/fridge?token='
 urlCam = urlCam + token
