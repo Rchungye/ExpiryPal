@@ -9,5 +9,8 @@ instance
 be/migrations/*
 migrations
 
+ML/clip-vit-base-patch32/
 ML/clip-vit-base-patch32/*
+clip-vit-base-patch32
 ML/yolov8x-seg.pt
+yolov8x-seg.pt
