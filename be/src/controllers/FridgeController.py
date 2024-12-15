@@ -150,3 +150,19 @@ def GetFridgeQr(fridge_code):
         payload={"qr_code_path": save_path, "qr_url": qr_url},
         status=200
     )
+
+
+def get_user_fridge_id(auth_token):
+    """
+    Obtiene el fridge_id vinculado al usuario basado en el auth_token.
+
+    Args:
+        auth_token (str): Token de autenticación del usuario.
+
+    Returns:
+        int: ID del refrigerador vinculado al usuario.
+    """
+    user = User.query.filter_by(auth_token=auth_token).first()
+    if not user or not user.fridges:
+        return None  # El usuario no está vinculado a ningún refrigerador
+    return user.fridges[0].id  # Retorna el primer refrigerador vinculado (puedes manejar múltiples si es necesario)

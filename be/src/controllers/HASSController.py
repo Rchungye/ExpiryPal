@@ -15,21 +15,26 @@ state = dict(state)
 token = state['attributes']['access_token']
 urlCam = 'https://hass.mdu-smartroom.se/fridge?token='
 urlCam = urlCam + token
-print(urlCam)
 
+def get_camera_url(entity_id: str, base_url: str):
+    """
+    Generates the camera URL from Home Assistant.
 
-def obtener_url_camara(entity_id: str, base_url: str):
-    ret = {"status": 400, "mensaje": "", "url": ""}
+    Args:
+        entity_id (str): camera entity ID.
+        base_url (str): Home Assistant server base URL.
+
+    Returns:
+        A dictionary containing the status, message, and camera URL.
+    """
+    ret = {"status": 400, "message": "", "url": ""}
     try:
-        client = Client(
-            f"{base_url}/api",
-            os.getenv("HASS_API_KEY")
-        )
+        client = Client(f"{base_url}/api", os.getenv("HASS_API_KEY"))
         state = client.get_entity(entity_id=entity_id).get_state()
         token = state.attributes["access_token"]
         ret["url"] = f"{base_url}/fridge?token={token}"
         ret["status"] = 200
-        ret["mensaje"] = "URL de la cámara generada con éxito."
+        ret["message"] = "Camera URL obtained successfully."
     except Exception as err:
-        ret["mensaje"] = f"Error al obtener la URL de la cámara: {err}"
+        ret["message"] = f"Error while obtaining camera URL. {err}"
     return ret
