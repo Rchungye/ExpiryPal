@@ -5,9 +5,7 @@ from src.models.notificationPreferences import NotificationPreferences as np
 from src.schemas.notificationPreferencesSchema import NotificationPreferencesSchema
 
 def GetAllNotificationPreferences():
-    nps = np.query.all()
-    return ControllerObject(
-        payload=[nps.as_dict() for np in nps], status=200)
+    return np.query.all()
 
 def GetNotificationPreferencesByFridgeId(fridge_id):
     """

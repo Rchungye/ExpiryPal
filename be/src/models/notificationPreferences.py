@@ -11,3 +11,12 @@ class NotificationPreferences(db.Model):
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
     
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "fridge_id": self.fridge_id,
+            "expiration": self.expiration,
+            "unusedItem": self.unusedItem
+        }
+
+        
