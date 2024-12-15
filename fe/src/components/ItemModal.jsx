@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 
 import PropTypes from "prop-types";
+import { updateItemName, updateItemExpirationDate } from "../services/api"; //API functions
 
 function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
-  const [expirationDate, setExpirationDate] = useState(item.dateExp || "");
-  const [itemName, setItemName] = useState(item.name || "Item" + item.id);
-  const [isEditingName, setIsEditingName] = useState(false);
+  const [expirationDate, setExpirationDate] = useState(item.dateExp || ""); //edit expiration date
+
+  const [itemName, setItemName] = useState(item.name || "Item" + item.id); //edit item name
+  const [isEditingName, setIsEditingName] = useState(false); //is the name being edited
   const modalRef = useRef();
 
   //Function to calculate days left
@@ -55,7 +57,6 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
   } else if (daysLeft !== null && daysLeft >= 0 && daysLeft <= 2) {
     warning = "orange";
   }
-  //blue warning left to calculate
 
   //Close modal on click outside
   useEffect(() => {
@@ -110,25 +111,47 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
     setIsEditingName(false);
   };
 
-  const handleSave = () => {
-    //Update the item data
-    const updatedItem = {
-      ...item,
-      name: itemName,
-      dateExp: expirationDate,
-    };
+  const handleSave = async () => {
+    try {
+      //Update the item name in the database
+      await updateItemName(item.id, 1, itemName); //PLACEHOLDER USER
+      //Update the expiration date in the database
+      console.log(
+        "Sending expiration date to API:",
+        formatDateToISO(expirationDate)
+      );
+      await updateItemExpirationDate(
+        item.id,
+        1, //PLACEHOLDER USER
+        formatDateToISO(expirationDate)
+      );
 
-    //Call the update function
-    onUpdateItem(updatedItem);
+      //Update the item data
+      const updatedItem = {
+        ...item,
+        name: itemName,
+        dateExp: expirationDate,
+      };
+      //Call the update function
+      onUpdateItem(updatedItem);
 
-    Swal.fire({
-      title: "Success!",
-      text: "Changes saved!",
-      icon: "success",
-      confirmButtonColor: "#285D85",
-    }).then(() => {
-      onClose();
-    });
+      Swal.fire({
+        title: "Success!",
+        text: "Changes saved!",
+        icon: "success",
+        confirmButtonColor: "#285D85",
+      }).then(() => {
+        onClose();
+      });
+    } catch (error) {
+      console.error("Failed to update item:", error);
+      Swal.fire({
+        title: "Error",
+        text: "Failed to save changes.",
+        icon: "error",
+        confirmButtonColor: "#285D85",
+      });
+    }
   };
 
   const handleRemove = () => {
