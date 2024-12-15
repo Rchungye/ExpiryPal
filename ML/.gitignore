@@ -1,0 +1,10 @@
+#ML
+.env
+__pycache__
+ML/clip-vit-base-patch32
+ML/clip-vit-base-patch32/*
+ML/yolov8x-seg.pt
+ML/virtualenv/*
+virtualenv
+ML/venv
+ML/venv/*
