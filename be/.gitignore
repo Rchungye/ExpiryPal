@@ -8,3 +8,4 @@ be/instance/*
 instance
 be/migrations/*
 migrations
+cypress*
