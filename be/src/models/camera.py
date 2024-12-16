@@ -8,6 +8,7 @@ class Camera(db.Model):
     brand = db.Column(db.String(50))
     entity_id = db.Column(db.String(2048))
     accessURL = db.Column(db.String(2048))
+    previus_picture_url = db.Column(db.String(2048), nullable=True) #added
     last_picture_url = db.Column(db.String(2048), nullable=True) #added
     
     def as_dict(self):

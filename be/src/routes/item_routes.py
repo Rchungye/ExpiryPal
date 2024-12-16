@@ -4,7 +4,7 @@ import datetime
 from src import app, db
 import json
 from flask import jsonify, request
-from src.models import item as Item
+from src.models.item import Item
 from src.controllers import (
     ItemController as ItemController,
 )
@@ -83,6 +83,7 @@ def updateItemExpirationDate(item_id):
     return jsonify(result)
 from datetime import datetime, timezone, timedelta
 
+
 @app.route('/items/add_batch', methods=['POST'])
 def add_items_batch():
     """
@@ -95,19 +96,26 @@ def add_items_batch():
         JSON with the result of the operation.
     """
     data = request.json
-    items = data.get('items')
-    print("ITEMS RECEIVED:", items)
-    print("DATA RECEIVED:", data)
-    if not items or not isinstance(items, list):
-        return jsonify({'error': 'El parámetro "items" es requerido y debe ser una lista'}), 400
+    if not data or "items" not in data:
+        return jsonify({"error": "Invalid payload"}), 400
+
+    items = data["items"]
+    print("Received items:", items)
 
     try:
+        added_count = 0
         for item_data in items:
             name = item_data.get("name", "Unknown Item")
             image_url = item_data.get("image_url")
             fridge_id = item_data.get("fridge_id")
 
-            # Crear el ítem en la base de datos
+            # Verificar si el ítem ya existe
+            existing_item = db.session.query(Item).filter_by(imageURL=image_url, fridge_id=fridge_id).first()
+            if existing_item:
+                print(f"Item with imageURL {image_url} already exists. Skipping...")
+                continue  # Saltar si ya existe
+
+            # Crear el nuevo ítem
             new_item = Item(
                 name=name,
                 imageURL=image_url,
@@ -115,9 +123,10 @@ def add_items_batch():
                 expirationDate=(datetime.now(timezone.utc) + timedelta(days=5))
             )
             db.session.add(new_item)
+            added_count += 1
 
         db.session.commit()
-        return jsonify({'message': f'{len(items)} items added successfully'}), 200
+        return jsonify({'message': f'{added_count} items added successfully'}), 200
 
     except Exception as e:
         db.session.rollback()
