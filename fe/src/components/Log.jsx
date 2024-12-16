@@ -14,6 +14,7 @@ const Log = () => {
       try {
         const response = await getFridgeLog(fridgeId);
         const { logs } = response.data.payload; //Extract logs from payload
+        console.log(logs);
         setLogs(logs);
       } catch (error) {
         console.error("Failed to fetch fridge logs:", error);
