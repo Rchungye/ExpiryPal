@@ -11,7 +11,14 @@ import cloudinary
 import requests
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
-from dotenv import load_dotenv
+
+# Configuration       
+cloudinary.config( 
+    CLOUD_NAME="dqwutjyjh",
+    API_KEY="132533594763411",
+    API_SECRET="cW4iHQs41fcqnnOFGSyDKVQJel8",
+    secure=True
+)
 
 
 app = Flask(__name__)
@@ -22,20 +29,6 @@ app.config['RESULT_FOLDER'] = 'results'
 model = YOLO("yolov8x-seg.pt")
 clip_model = CLIPModel.from_pretrained("clip-vit-base-patch32")
 clip_processor = CLIPProcessor.from_pretrained("clip-vit-base-patch32")
-load_dotenv()
-
-cloudinary.config(
-    CLOUD_NAME=os.getenv("CLOUDINARY_CLOUD_NAME"),
-    API_KEY=os.getenv("CLOUDINARY_API_KEY"),
-    API_SECRET=os.getenv("CLOUDINARY_API_SECRET"),
-    secure=True
-)
-
-print("Cloudinary Config:", cloudinary.config().api_key, cloudinary.config().api_secret, cloudinary.config().cloud_name)
-print("Cloudinary Config Before Upload:")
-print("Cloud Name:", cloudinary.config().cloud_name)
-print("API Key:", cloudinary.config().api_key)
-print("API Secret:", cloudinary.config().api_secret)
 
 
 # Function to enhance image contrast
@@ -51,29 +44,30 @@ def extract_features(image):
         features = clip_model.get_image_features(**inputs)
     return features.cpu().numpy().flatten()
 
+
 def extract_items(image_path, model, fridge_id):
+    img = cv2.imread(image_path)
+    img_contrast = enhance_contrast(img)
+    results = model(img_contrast)
+
     items_metadata = []
 
-    try:
-        img = cv2.imread(image_path)
-        img_contrast = enhance_contrast(img)
-        results = model(img_contrast)
+    for i, box in enumerate(results[0].boxes):
+        x1, y1, x2, y2 = map(int, box.xyxy[0])
+        class_id = int(box.cls)
+        class_name = results[0].names[class_id]
 
-        for i, box in enumerate(results[0].boxes):
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-            class_id = int(box.cls)
-            class_name = results[0].names[class_id]
+        cropped_img = img[y1:y2, x1:x2]
 
-            cropped_img = img[y1:y2, x1:x2]
+        # Convert cropped image to bytes for Cloudinary upload
+        _, img_encoded = cv2.imencode('.jpg', cropped_img)
+        image_bytes = BytesIO(img_encoded.tobytes())
 
-            # Guardar la imagen temporalmente
-            temp_image_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{class_name}_{i+1}.jpg")
-            cv2.imwrite(temp_image_path, cropped_img)
-
-            # Subir a Cloudinary
+        folder_path = f"Fridges/{fridge_id}/cropped_items"
+        try:
             response = cloudinary.uploader.upload(
-                temp_image_path,
-                folder=f"Fridges/{fridge_id}/Fragments",
+                file=image_bytes,
+                folder=folder_path,
                 public_id=f"{class_name}_{i+1}"
             )
             items_metadata.append({
@@ -81,12 +75,12 @@ def extract_items(image_path, model, fridge_id):
                 "image_url": response.get("url"),
                 "fridge_id": fridge_id
             })
-            os.remove(temp_image_path)
-            print("ITEM METADATA:", items_metadata)
-    except Exception as e:
-        print(f"Error processing fragments: {e}")
+        except Exception as e:
+            print(f"Error uploading fragment {class_name}_{i+1}: {e}")
 
+    print(f"Extracted Items Metadata: {items_metadata}")
     return items_metadata
+
 
     #     output_path = os.path.join(output_folder, f"{class_name}_{i+1}.jpg")
     #     cv2.imwrite(output_path, cropped_img)
@@ -127,64 +121,71 @@ def compare_items(items1, items2, similarity_threshold=0.75):
     return added_items, removed_items
 
 
+# Function to upload image to Cloudinary
+def upload_to_cloudinary(file_path, folder_name):
+    response = cloudinary.uploader.upload(file_path, folder=folder_name)
+    return response['secure_url']
+
+
 @app.route('/')
 def index():
     return render_template('index_dynamic.html')
-
-
 @app.route('/upload', methods=['POST'])
 def upload():
     """
-    Process an image, fragment items, and send their data to the backend.
-
-    Body Params:
-        - image_url (str): URL of the image in Cloudinary.
-        - fridge_id (int): ID of the fridge.
-
-    Returns:
-        JSON with the results of the operation.
+    Process two images, fragment items from the last image, and send their data to the backend.
     """
     data = request.json
-    image_url = data.get('image_url')
+    previous_img_url = data.get('previous_img_url')
+    last_img_url = data.get('last_img_url')
     fridge_id = data.get('fridge_id')
 
-    print("Processing image:", image_url)
-    print("Fridge ID:", fridge_id)
-    if not image_url or not isinstance(image_url, str):
-        return jsonify({'error': 'Invalid "image_url"'}), 400
+    print("DATA RECEIVED:", data)
+
+    # Validar parámetros
+    if not last_img_url or not isinstance(last_img_url, str):
+        return jsonify({'error': 'Invalid "last_img_url"'}), 400
 
     if not fridge_id or not isinstance(fridge_id, int):
         return jsonify({'error': 'Invalid "fridge_id"'}), 400
 
+    print("Parameters validated.")
     try:
-        # Descargar la imagen desde la URL
-        response = requests.get(image_url)
-        if response.status_code != 200:
-            return jsonify({'error': 'No se pudo descargar la imagen'}), 400
-
-        # Guardar temporalmente la imagen
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], 'uploaded_image.jpg')
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-        with open(image_path, 'wb') as f:
-            f.write(response.content)
 
-        # Extraer y subir los fragmentos
-        items_metadata = extract_items(image_path, model, fridge_id)
+        # Descargar y guardar la última imagen
+        print("Downloading last image...")
+        last_response = requests.get(last_img_url)
+        if last_response.status_code != 200:
+            return jsonify({'error': 'Failed to download last image'}), 400
 
-        # Enviar los datos al backend
+        last_image_path = os.path.join(app.config['UPLOAD_FOLDER'], 'last_image.jpg')
+        with open(last_image_path, 'wb') as f:
+            f.write(last_response.content)
+
+        # Extraer ítems de la última imagen
+        print("Extracting items from last image...")
+        last_items = extract_items(last_image_path, model, fridge_id)
+
+        print("Extracted Items from Last Image:", last_items)
+
+        # Enviar `last_items` al backend
         backend_url = "http://127.0.0.1:5001/items/add_batch"
-        backend_response = requests.post(backend_url, json={"items": items_metadata})
-        
+        backend_response = requests.post(backend_url, json={"items": last_items})
         if backend_response.status_code != 200:
             return jsonify({
                 'error': 'Error al enviar los datos al backend',
                 'details': backend_response.text
             }), backend_response.status_code
 
-        return jsonify({'fragment_urls': [item['image_url'] for item in items_metadata]})
+        return jsonify({
+            'status': 'success',
+            'last_items': last_items
+        })
 
     except Exception as e:
-        return jsonify({'error': 'Error al procesar la imagen', 'details': str(e)}), 500
+        return jsonify({'error': 'Error processing images', 'details': str(e)}), 500
+
 
 # @app.route('/upload', methods=['POST'])
 # def upload():
