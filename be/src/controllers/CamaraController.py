@@ -125,7 +125,7 @@ def procesar_camara(entity_id, base_url, fridge_id):
         return {"status": 400, "message": "Camera URL not obtained."}
     if not fridge_id:
         return {"status": 400, "mensaje": "Fridge ID no es válido."}
-
+    
 
     try:
         # Capturar el pantallazo en memoria como bytes
@@ -142,68 +142,42 @@ def procesar_camara(entity_id, base_url, fridge_id):
         if not uploaded_url:
             return {"status": 500, "mensaje": "Error uploading image to Cloudinary."}
 
-        # Update the last picture URL in the database
-        try:
-            camera = Camera.query.filter_by(fridge_id=fridge_id).first()
-            if camera:
-                camera.last_picture_url = uploaded_url
-                db.session.commit()
-        except Exception as err:
-            print(f"Error updating camera URL in the database: {err}")
+        camera = Camera.query.filter_by(fridge_id=fridge_id).first()
+        if camera:
+            camera.previous_picture_url = camera.last_picture_url or uploaded_url  # Use the new image if no previous
+            camera.last_picture_url = uploaded_url
+            db.session.commit()
 
-        return {
-            "status": 200,
-            "mensaje": "Image uploaded successfully.",
-            "uploaded_url": uploaded_url
-        }
+        return {"status": 200, "message": "Image uploaded successfully.", "uploaded_url": uploaded_url}
 
     except Exception as err:
-        print(f"Error processing image : {err}")
-        return {"status": 500, "mensaje": f"Error procesing camera upload: {err}"}
-    
+        print(f"Error processing camera: {err}")
+        return {"status": 500, "message": f"Error processing camera: {err}"}
 
-
-def send_image_to_ml(image_url, fridge_id):
+def send_image_pair_to_ml(payload):
     """
-    Send the last picture URL of a camera to the ML model.
+    Send the previous and last picture URLs of a fridge to the ML model.
 
     Args:
-        camera_id (int): The ID of the camera.
-        fridge_id (int): The ID of the fridge.
+        payload (dict): Contains 'previous_img_url', 'last_img_url', and 'fridge_id'.
 
     Returns:
         dict: Response from the ML model.
     """
-    # Obtener la última imagen de la cámara
-   
-    if not image_url:
-        print("No image URL provided for processing.")
-        return {"status": "error", "message": "No image URL provided"}
-    
-    # Verificar si image_url es realmente un string
-    if not isinstance(image_url, str):
-        print(f"Invalid image_url format: {image_url}")
-        return {"status": "error", "message": "Invalid image_url format"}
-    # Preparar el payload para el modelo ML
-    ml_endpoint = " http://127.0.0.1:5000/upload"  # Reemplaza con el endpoint real del modelo ML
-    payload = {
-        "image_url": image_url,
-        "fridge_id": fridge_id
-    }
-
+    ml_endpoint = "http://127.0.0.1:5000/upload"
     try:
-        # Enviar la URL y el fridge_id al modelo
         response = requests.post(ml_endpoint, json=payload)
         if response.status_code == 200:
-            print("Image successfully processed by ML model.")
-            return response.json()  # Devuelve la respuesta del modelo
+            print("Image pair successfully processed by ML model.")
+            return response.json()
         else:
-            print(f"Error processing image in ML model: {response.text}")
+            print(f"Error processing image pair in ML model: {response.text}")
             return {"status": "error", "message": response.text}
     except Exception as e:
         print(f"Error connecting to ML model: {e}")
         return {"status": "error", "message": str(e)}
 
+    
 def get_last_picture_url(camera_id):
     """
     Retrieve the last picture URL for a given camera.
@@ -219,6 +193,7 @@ def get_last_picture_url(camera_id):
         return {"status": "error", "message": "Camera not found"}
 
     if not camera.last_picture_url:
-        return {"status": "error", "message": "No picture available for this camera"}
+        return {"status": "first_run", "message": "No previous picture available for this camera"}
 
     return {"status": "success", "last_picture_url": camera.last_picture_url}
+
