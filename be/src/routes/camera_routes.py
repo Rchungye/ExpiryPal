@@ -87,7 +87,7 @@ def actualizar_url_camara_task():
 
                     print(f"Previous image URL: {last_image_url}")
                     print(f"New image URL: {new_image_url}")
-                    
+
                     # Enviar ambas imágenes al modelo ML
                     ml_payload = {
                         "previous_img_url": last_image_url,
