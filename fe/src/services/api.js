@@ -23,3 +23,7 @@ export const getNotificationPreferences = (fridgeId) =>
   axios.get(`${API_BASE_URL}/notificationPreferences/${fridgeId}`);
 export const saveNotificationPreferences = (preferences) =>
   axios.post(`${API_BASE_URL}/notificationPreferences`, preferences);
+
+//Fetch fridge logs
+export const getFridgeLog = (fridgeId) =>
+  axios.get(`${API_BASE_URL}/fridges/${fridgeId}/logs`);
