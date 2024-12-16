@@ -54,7 +54,7 @@ const NavBar = ({ onBackToItems }) => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen font-roboto">
+    <div className="bg-gray-100 min-h-screen font-roboto sliding-menu">
       {/* Header */}
       <header className="bg-blue-main text-white flex justify-between items-center p-4 relative">
         <h1 className="text-3xl mx-auto">MENU</h1>
@@ -122,7 +122,7 @@ const NavBar = ({ onBackToItems }) => {
         <h3 className="text-blue-main font-bold mb-8">View the Fridge Log</h3>
         <Link
           to="/fridge/log"
-          className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
+          className="log-button bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
         >
           Fridge Log
         </Link>

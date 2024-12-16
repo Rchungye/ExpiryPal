@@ -151,7 +151,10 @@ function Groceries() {
       <header className="bg-blue-main text-white">
         <div className="max-w-[1024px] mx-auto p-4 flex justify-between items-center">
           <h1 className="text-3xl">ALL ITEMS</h1>
-          <button onClick={toggleNavBar} className="text-3xl cursor-pointer">
+          <button
+            onClick={toggleNavBar}
+            className="text-3xl cursor-pointer menu-button"
+          >
             {navBarOpen ? "×" : "☰"}
           </button>
         </div>
@@ -209,7 +212,7 @@ function Groceries() {
                     : blueWarning
                     ? "border border-blue-400"
                     : ""
-                } cursor-pointer max-w-52`}
+                } cursor-pointer max-w-52 item`}
               >
                 {isNew && (
                   <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
