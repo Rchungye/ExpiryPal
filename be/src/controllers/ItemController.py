@@ -20,7 +20,7 @@ def updateItemName(item_id, user_id, new_name):
             item_id=item.id,
             user_id=user_id,
             action="Changed name",
-            details=f"From '{item.name}' to '{new_name}'"
+            details=f"'{item.name}' to '{new_name}'"
         )
         item.name = new_name
         db.session.add(log)
@@ -40,7 +40,7 @@ def updateItemExpirationDate(item_id, user_id, new_expiration_date):
             item_id=item.id,
             user_id=user_id,
             action="Changed expiration date",
-            details=f"From '{item.expirationDate}' to '{new_expiration_date}'"
+            details=f"'{item.expirationDate}' to '{new_expiration_date}'"
         )
         item.expirationDate = new_expiration_date
         db.session.add(log)
