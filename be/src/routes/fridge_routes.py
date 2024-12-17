@@ -44,12 +44,37 @@ def GetNotificationPreferencesByFridgeId(fridge_id):
     """
 
     result = Fridge.GetNotificationPreferencesByFridgeId(fridge_id)
-    return jsonify(result)
+    return result.jsonify()
 
-@app.route('/link', methods=['POST'])
-def link_user_to_fridge():
-    data = request.json
-    code = data.get('code')
-    username = data.get('username', 'Anonymous')
-    result = Fridge.link_user_to_fridge(code, username)
+@app.route('/link', methods=['GET'])
+def link_user_to_fridge_route():
+    """
+    Links a user to a fridge via the scanned QR code.
+    """
+    fridge_code = request.args.get('code')  # Obtén el código del QR
+
+    # Valida que el código esté presente
+    if not fridge_code:
+        return {
+            "error": "Fridge code not provided",
+            "status": 400
+        }, 400
+
+    # Llama a la lógica para vincular usuario y nevera
+    result = Fridge.link_user_to_fridge(fridge_code)  
+    return result
+
+
+@app.route('/fridges/<string:fridge_code>/qr', methods=['GET'])
+def GetFridgeQr(fridge_code):
+    """
+    Route to generate a QR code for a specific fridge.
+
+    Args:
+        fridge_code (str): The unique code of the fridge.
+
+    Returns:
+        JSON: A JSON response containing the Base64 encoded QR code image.
+    """
+    result = Fridge.GetFridgeQr(fridge_code)
     return result.jsonify()

@@ -1,21 +1,35 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getFridgeLog } from "../services/api"; // Import API function
 
 const Log = () => {
   const navigate = useNavigate();
+  const [logs, setLogs] = useState([]); //Store fetched logs
+  const [loading, setLoading] = useState(true); //Track loading state
+  const fridgeId = 1; //Replace with dynamic fridge ID if necessary
 
-  const logs = [
-    { id: 1, user: "Petar2", action: 'changed item1 to "CocaCola"' },
-    { id: 2, user: "Petar2", action: "changed item1 expiration date" },
-    { id: 3, user: "SleepyStudent", action: 'changed item2 to "Milk"' },
-    { id: 4, user: "SleepyStudent", action: "changed item2 expiration date" },
-    { id: 5, user: "Bingo", action: "changed item 5 expiration date" },
-    { id: 6, user: "Siri", action: "changed item 3 expiration date" },
-  ];
+  useEffect(() => {
+    //Fetch logs from the backend
+    const fetchLogs = async () => {
+      try {
+        const response = await getFridgeLog(fridgeId);
+        const { logs } = response.data.payload; //Extract logs from payload
+        setLogs(logs);
+      } catch (error) {
+        console.error("Failed to fetch fridge logs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLogs();
+  }, [fridgeId]);
 
+  if (loading) {
+    return <p className="text-center text-gray-500">Loading logs...</p>;
+  }
   return (
     <div className="bg-gray-100 min-h-screen font-roboto">
-      <header className="bg-blue-main text-white ">
+      <header className="bg-blue-main text-white sticky top-0 z-10">
         <div className="max-w-[1024px] flex justify-between items-center p-4 relative mx-auto ">
           <button
             onClick={() => navigate("/fridge/groceries")}
@@ -36,16 +50,14 @@ const Log = () => {
             <span className="text-[#285D85] ml-1 cursor-pointer">✎</span>
           </p>
         </div>
-
         {/* Log List */}
         <div className="p-4 space-y-4">
-          {logs.map((log) => (
+          {logs.map((log, index) => (
             <div
-              key={log.id}
+              key={index}
               className="bg-white p-3 rounded shadow text-sm text-gray-700"
             >
-              <span className="font-bold text-[#285D85]">{log.user}</span>{" "}
-              {log.action}
+              {log}
             </div>
           ))}
         </div>

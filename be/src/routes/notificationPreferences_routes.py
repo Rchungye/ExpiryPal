@@ -10,7 +10,9 @@ from src.controllers import (
 @app.route("/notificationPreferences/all", methods=["GET"])
 def GetAllNotificationPreferences():
     result = np.GetAllNotificationPreferences()
-    return result.jsonify()
+    # Convert the SQLAlchemy objects to dictionaries
+    data = [pref.to_dict() for pref in result]
+    return jsonify(data)  # Flask's jsonify handles lists and dicts
 
 @app.route("/notificationPreferences/<int:fridge_id>", methods=["GET"])
 def get_notification_preferences(fridge_id):

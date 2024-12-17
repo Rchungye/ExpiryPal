@@ -1,29 +1,60 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import { saveNotificationPreferences } from "../services/notificationService";
+import Swal from "sweetalert2";
+import {
+  getNotificationPreferences,
+  saveNotificationPreferences,
+} from "../services/api";
 
 const NavBar = ({ onBackToItems }) => {
   const [expirationDays, setExpirationDays] = useState(3);
   const [unusedDays, setUnusedDays] = useState(7);
+  const fridgeId = 1; //PLACEHOLDER FRIDGE
+
+  useEffect(() => {
+    // etch current notification preferences from the backend
+    const fetchPreferences = async () => {
+      try {
+        const response = await getNotificationPreferences(fridgeId);
+        const preferences = response.data;
+        setExpirationDays(preferences.expiration || 3);
+        setUnusedDays(preferences.unusedItem || 7);
+      } catch (error) {
+        console.error("Failed to fetch notification preferences:", error);
+      }
+    };
+
+    fetchPreferences();
+  }, [fridgeId]);
 
   const handleSaveChanges = async () => {
     const payload = {
       expiration: expirationDays,
       unusedItem: unusedDays,
-      fridge_id: 1,
+      fridge_id: fridgeId,
     };
 
     try {
-      await saveNotificationPreferences(payload);
-      alert("Notification preferences saved successfully!");
+      await saveNotificationPreferences(payload); //Save preferences to backend
+      Swal.fire({
+        title: "Success!",
+        text: "Notification changes saved!",
+        icon: "success",
+        confirmButtonColor: "#285D85",
+      });
     } catch (error) {
-      alert("Failed to save notification preferences.", error);
+      Swal.fire({
+        title: "Error",
+        text: "Failed to save changes.",
+        icon: "error",
+        confirmButtonColor: "#285D85",
+      });
     }
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen font-roboto">
+    <div className="bg-gray-100 min-h-screen font-roboto sliding-menu">
       {/* Header */}
       <header className="bg-blue-main text-white flex justify-between items-center p-4 relative">
         <h1 className="text-3xl mx-auto">MENU</h1>
@@ -78,8 +109,10 @@ const NavBar = ({ onBackToItems }) => {
 
       {/* Save Changes Button */}
       <div className="flex justify-center mt-6">
-        <button className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
-        onClick={handleSaveChanges}>
+        <button
+          className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
+          onClick={handleSaveChanges}
+        >
           Save changes
         </button>
       </div>
@@ -89,7 +122,7 @@ const NavBar = ({ onBackToItems }) => {
         <h3 className="text-blue-main font-bold mb-8">View the Fridge Log</h3>
         <Link
           to="/fridge/log"
-          className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
+          className="log-button bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
         >
           Fridge Log
         </Link>
@@ -97,6 +130,7 @@ const NavBar = ({ onBackToItems }) => {
     </div>
   );
 };
+
 NavBar.propTypes = {
   onBackToItems: PropTypes.func.isRequired,
 };
