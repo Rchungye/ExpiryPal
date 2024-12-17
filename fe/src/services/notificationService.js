@@ -8,7 +8,7 @@ export const getAllNotificationPreferences = async () => {
     .catch((response) => Promise.resolve(response));
 };
 
-export const getNotificationPreferencesByFridgeId = async (fridgeId) => {
+export const getNotificationPreferences = async (fridgeId) => {
   return ApiService.get(`/notificationPreferences/${fridgeId}`)
     .then((response) => response.data)
     .catch((response) => Promise.resolve(response));

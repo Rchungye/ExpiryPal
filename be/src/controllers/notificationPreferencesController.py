@@ -21,7 +21,7 @@ def GetNotificationPreferencesByFridgeId(fridge_id):
     if preferences is None:
         return ControllerObject(
             title="Not Found",
-            mensaje=f"No notification preferences found for fridge_id: {fridge_id}",
+            message=f"No notification preferences found for fridge_id: {fridge_id}",
             payload=None,
             status=404
         )

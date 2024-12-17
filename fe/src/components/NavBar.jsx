@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import {
   getNotificationPreferences,
   saveNotificationPreferences,
-} from "../services/api";
+} from "../services/notificationService";
 
 const NavBar = ({ onBackToItems }) => {
   const [expirationDays, setExpirationDays] = useState(3);
@@ -18,10 +18,15 @@ const NavBar = ({ onBackToItems }) => {
       try {
         const response = await getNotificationPreferences(fridgeId);
         const preferences = response.data;
-        setExpirationDays(preferences.expiration || 3);
-        setUnusedDays(preferences.unusedItem || 7);
+
+        if (preferences) {
+          setExpirationDays(preferences.expiration || 3);
+          setUnusedDays(preferences.unusedItem || 7);
+        } else {
+          console.log("No preferences found for this fridge.");
+        }
       } catch (error) {
-        console.error("Failed to fetch notification preferences:", error);
+        console.error("Failed to fetch notification preferences:", error.message);
       }
     };
 

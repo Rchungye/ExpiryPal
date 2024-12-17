@@ -4,7 +4,7 @@ import { ApiService } from './api.config';
 
 export const getItemsByFridgeId = async (fridgeId) => {
   return ApiService.get(`/items/${fridgeId}`)
-    .then((response) => response.data)
+    .then((response) => response)
     .catch((response) => Promise.resolve(response));
 };
 

@@ -13,7 +13,7 @@ def GetAllUsers():
     except Exception as e:
         return ControllerObject(
             title="Error",
-            mensaje=str(e),
+            message=str(e),
             status=500
         )
 

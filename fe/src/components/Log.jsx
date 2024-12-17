@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getFridgeLog } from "../services/api"; // Import API function
+import { getFridgeLog } from "../services/fridge"; // Import API function
 
 const Log = () => {
   const navigate = useNavigate();

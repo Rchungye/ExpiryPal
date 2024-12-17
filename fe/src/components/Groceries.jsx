@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import NavBar from "./NavBar";
 import ItemModal from "./ItemModal";
-import { getItemsByFridgeId } from "../services/api"; //Import API call
+import { getItemsByFridgeId } from "../services/items"; //Import API call
 
 function Groceries() {
   const [navBarOpen, setNavBarOpen] = useState(false);
