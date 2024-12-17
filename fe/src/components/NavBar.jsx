@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBell } from "@fortawesome/free-solid-svg-icons";
 import {
   getNotificationPreferences,
   saveNotificationPreferences,
@@ -74,10 +76,9 @@ const NavBar = ({ onBackToItems }) => {
           Notification Settings
         </h2>
         <div className="flex justify-center">
-          <img
-            src="https://img.icons8.com/ios-filled/50/285D85/bell.png"
-            alt="Notification Icon"
-            className="h-8"
+          <FontAwesomeIcon 
+            icon={faBell} 
+            className="h-8 text-[#285D85]"
           />
         </div>
       </div>
