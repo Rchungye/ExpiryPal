@@ -1,5 +1,4 @@
 from sklearn.metrics.pairwise import cosine_similarity
-
 def compare_items(items1, items2, similarity_threshold=0.75):
     added_items = []
     removed_items = []
