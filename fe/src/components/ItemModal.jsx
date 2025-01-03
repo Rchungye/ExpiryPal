@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 
 import PropTypes from "prop-types";
-import { updateItemName, updateItemExpirationDate } from "../services/api"; //API functions
+import { updateItemName, updateItemExpirationDate } from "../services/items"; //API functions
 
 function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
   const [expirationDate, setExpirationDate] = useState(item.dateExp || ""); //edit expiration date

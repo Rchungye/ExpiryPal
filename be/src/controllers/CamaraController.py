@@ -124,7 +124,7 @@ def procesar_camara(entity_id, base_url, fridge_id):
     if url_data["status"] != 200:
         return {"status": 400, "message": "Camera URL not obtained."}
     if not fridge_id:
-        return {"status": 400, "mensaje": "Fridge ID no es válido."}
+        return {"status": 400, "message": "Fridge ID no es válido."}
     
 
     try:
@@ -133,14 +133,14 @@ def procesar_camara(entity_id, base_url, fridge_id):
         screenshot_bytes = takeScreenshotAsBytes(url_data["url"])
 
         if not screenshot_bytes:
-            return {"status": 500, "mensaje": "Screenshot not captured."}
+            return {"status": 500, "message": "Screenshot not captured."}
 
         # Subir los bytes a Cloudinary
         tags = [f"fridge_{fridge_id}", "screenshot"]
         uploaded_url = upload_image_to_cloudinary_from_bytes(screenshot_bytes, fridge_id, tags=tags)
 
         if not uploaded_url:
-            return {"status": 500, "mensaje": "Error uploading image to Cloudinary."}
+            return {"status": 500, "message": "Error uploading image to Cloudinary."}
 
         camera = Camera.query.filter_by(fridge_id=fridge_id).first()
         if camera:

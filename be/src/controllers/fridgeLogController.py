@@ -29,7 +29,9 @@ def getFridgeLog(fridge_id):
     result = []
     for log, user, item in logs:
         if log.action == "Changed name":
-            result.append(f"{user.username} changed {item.name} to {log.details.split(' to ')[1]}")
+            print(log.details)
+
+            result.append(f"{user.username} changed item name from {log.details.split(' to ')[0]} to {item.name}")
         elif log.action == "Changed expiration date":
             result.append(f"{user.username} changed {item.name} expiration date")
     

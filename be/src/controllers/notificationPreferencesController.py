@@ -1,8 +1,9 @@
 from . import ControllerObject
-from datetime import datetime, date
 from src import app, db
 from src.models.notificationPreferences import NotificationPreferences as np
 from src.schemas.notificationPreferencesSchema import NotificationPreferencesSchema
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import update
 
 def GetAllNotificationPreferences():
     return np.query.all()
@@ -17,21 +18,23 @@ def GetNotificationPreferencesByFridgeId(fridge_id):
     Returns:
         ControllerObject: Contains the notification preferences data and status code.
     """
-    preferences = np.query.get(fridge_id)
+    preferences = np.query.filter_by(fridge_id=fridge_id).first()
     if preferences is None:
         return ControllerObject(
             title="Not Found",
-            mensaje=f"No notification preferences found for fridge_id: {fridge_id}",
+            message=f"No notification preferences found for fridge_id: {fridge_id}",
             payload=None,
             status=404
         )
     return ControllerObject(payload=preferences.as_dict(), status=200)
 
-
 def save_preferences(data):
+    """
+    Saves or updates notification preferences for a fridge.
+    """
     schema = NotificationPreferencesSchema()
 
-    # validate the data received from the client
+    # Validate the data
     errors = schema.validate(data)
     if errors:
         return {
@@ -45,28 +48,33 @@ def save_preferences(data):
     unusedItem = data["unusedItem"]
 
     try:
-        # look for existing preferences
-        preferences = np.query.get(fridge_id)
-
-        if preferences:
-            # if exist, update the existing preferences
-            preferences.expiration = expiration
-            preferences.unusedItem = unusedItem
+        # First, try to find existing preferences
+        existing = db.session.query(np).filter_by(fridge_id=fridge_id).first()
+        
+        if existing:
+            # Update existing record using SQL UPDATE
+            stmt = update(np).where(np.fridge_id == fridge_id).values(
+                expiration=expiration,
+                unusedItem=unusedItem
+            )
+            db.session.execute(stmt)
         else:
-            # if not, create new preferences
-            preferences = np(
+            # Create new record
+            new_preferences = np(
                 fridge_id=fridge_id,
                 expiration=expiration,
-                unusedItem=unusedItem,
+                unusedItem=unusedItem
             )
-            db.session.add(preferences)
+            db.session.add(new_preferences)
 
         db.session.commit()
-
+        
+        # Fetch and return the updated/created record
+        result = db.session.query(np).filter_by(fridge_id=fridge_id).first()
         return {
             "success": True,
             "message": "Preferences saved successfully.",
-            "data": preferences.as_dict()
+            "data": result.as_dict()
         }, 200
 
     except Exception as e:
@@ -74,6 +82,6 @@ def save_preferences(data):
         print(f"Error saving preferences: {e}")
         return {
             "success": False,
-            "message": "Internal server error",
+            "message": "Failed to save preferences",
             "error": str(e)
         }, 500

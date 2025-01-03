@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBell } from "@fortawesome/free-solid-svg-icons";
 import {
   getNotificationPreferences,
   saveNotificationPreferences,
-} from "../services/api";
+} from "../services/notificationService";
 
 const NavBar = ({ onBackToItems }) => {
   const [expirationDays, setExpirationDays] = useState(3);
@@ -18,10 +20,15 @@ const NavBar = ({ onBackToItems }) => {
       try {
         const response = await getNotificationPreferences(fridgeId);
         const preferences = response.data;
-        setExpirationDays(preferences.expiration || 3);
-        setUnusedDays(preferences.unusedItem || 7);
+
+        if (preferences) {
+          setExpirationDays(preferences.expiration || 3);
+          setUnusedDays(preferences.unusedItem || 7);
+        } else {
+          console.log("No preferences found for this fridge.");
+        }
       } catch (error) {
-        console.error("Failed to fetch notification preferences:", error);
+        console.error("Failed to fetch notification preferences:", error.message);
       }
     };
 
@@ -69,10 +76,9 @@ const NavBar = ({ onBackToItems }) => {
           Notification Settings
         </h2>
         <div className="flex justify-center">
-          <img
-            src="https://img.icons8.com/ios-filled/50/285D85/bell.png"
-            alt="Notification Icon"
-            className="h-8"
+          <FontAwesomeIcon 
+            icon={faBell} 
+            className="h-8 text-[#285D85]"
           />
         </div>
       </div>

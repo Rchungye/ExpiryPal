@@ -1,18 +1,44 @@
 import React, { useState, useEffect } from "react";
 import NavBar from "./NavBar";
 import ItemModal from "./ItemModal";
-import { getItemsByFridgeId } from "../services/api"; //Import API call
+import { getItemsByFridgeId } from "../services/items";
+import { getNotificationPreferences } from "../services/notificationService";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBell } from "@fortawesome/free-solid-svg-icons";
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Modal from '@mui/material/Modal';
 
 function Groceries() {
   const [navBarOpen, setNavBarOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false); //Controls modal visibility
-  const [selectedItem, setSelectedItem] = useState(null); //Stores the item to display via modal
-  const [items, setItems] = useState([]); //Managing the list of items
-  const fridgeId = 1; //Replace with the correct fridge ID
-  const [sortOption, setSortOption] = useState("newest"); //Sorting option
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [items, setItems] = useState([]);
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+  const [notificationPreferences, setNotificationPreferences] = useState({
+    expiration: 3,
+    unusedItem: 7
+  });
+  const fridgeId = 1;
+  const [sortOption, setSortOption] = useState("newest");
+
+  const modalStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '90%',
+    maxWidth: 800,
+    maxHeight: '80vh',
+    bgcolor: 'background.paper',
+    borderRadius: '8px',
+    boxShadow: 24,
+    p: 4,
+    overflow: 'auto'
+  };
 
   useEffect(() => {
-    //Fetch items from the backend
     const fetchItems = async () => {
       try {
         const response = await getItemsByFridgeId(fridgeId);
@@ -28,7 +54,58 @@ function Groceries() {
         console.error("Failed to fetch items:", error);
       }
     };
+
+    const fetchNotificationPreferences = async () => {
+      try {
+        const response = await getNotificationPreferences(fridgeId);
+        if (response && response.data) {
+          setNotificationPreferences({
+            expiration: response.data.expiration,
+            unusedItem: response.data.unusedItem
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch notification preferences:", error);
+      }
+    };
+
     fetchItems();
+    fetchNotificationPreferences();
+  }, [fridgeId]);
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const response = await getItemsByFridgeId(fridgeId);
+        const transformedItems = response.data.map((item) => ({
+          id: item.id,
+          name: item.name || `Item ${item.id}`,
+          image: item.imageURL || "/items/default.png",
+          dateExp: formatDateToDDMMYY(item.expirationDate),
+          dateAdded: formatDateToDDMMYY(item.addedDate),
+        }));
+        setItems(transformedItems);
+      } catch (error) {
+        console.error("Failed to fetch items:", error);
+      }
+    };
+
+    const fetchNotificationPreferences = async () => {
+      try {
+        const response = await getNotificationPreferences(fridgeId);
+        if (response && response.data) {
+          setNotificationPreferences({
+            expiration: response.data.expiration,
+            unusedItem: response.data.unusedItem
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch notification preferences:", error);
+      }
+    };
+
+    fetchItems();
+    fetchNotificationPreferences();
   }, [fridgeId]);
 
   const toggleNavBar = () => {
@@ -146,11 +223,38 @@ function Groceries() {
     return `${day}/${month}/${year}`;
   };
   const sortedItems = sortItems(items, sortOption);
+
+  const getNotificationItems = () => {
+    return items.filter(item => {
+      const daysLeft = calculateDaysLeft(item.dateExp);
+      const daysSinceAdded = calculateDaysSinceAdded(item.dateAdded);
+
+      return (
+        (daysLeft !== null && daysLeft <= notificationPreferences.expiration) ||
+        (daysSinceAdded !== null && daysSinceAdded >= notificationPreferences.unusedItem)
+      );
+    });
+  };
+
   return (
     <div className="bg-gray-100 min-h-screen font-roboto relative overflow-hidden">
       <header className="bg-blue-main text-white">
         <div className="max-w-[1024px] mx-auto p-4 flex justify-between items-center">
           <h1 className="text-3xl">ALL ITEMS</h1>
+
+          <div className="flex justify-center relative">
+            <FontAwesomeIcon
+              icon={faBell}
+              className="h-8 cursor-pointer hover:text-gray-200"
+              onClick={() => setNotificationModalOpen(true)}
+            />
+            {getNotificationItems().length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {getNotificationItems().length}
+              </span>
+            )}
+          </div>
+
           <button
             onClick={toggleNavBar}
             className="text-3xl cursor-pointer menu-button"
@@ -159,6 +263,71 @@ function Groceries() {
           </button>
         </div>
       </header>
+
+      {/* Notifications Modal */}
+      <Modal
+        open={notificationModalOpen}
+        onClose={() => setNotificationModalOpen(false)}
+        aria-labelledby="notification-modal-title"
+      >
+        <Box sx={modalStyle}>
+          <div className="flex justify-between items-center mb-4">
+            <Typography variant="h6" component="h2">
+              Notifications
+            </Typography>
+            <button
+              onClick={() => setNotificationModalOpen(false)}
+              className="text-2xl font-bold hover:text-gray-700"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="grid gap-4">
+            {getNotificationItems().map((item) => {
+              const daysLeft = calculateDaysLeft(item.dateExp);
+              const daysSinceAdded = calculateDaysSinceAdded(item.dateAdded);
+              const expired = daysLeft !== null ? daysLeft < 0 : false;
+
+              return (
+                <div key={item.id} className="flex items-center bg-white p-4 rounded-lg shadow">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-16 h-16 object-contain mr-4"
+                  />
+                  <div className="flex-grow">
+                    <h3 className="font-bold text-lg">{item.name}</h3>
+                    <p className="text-sm text-gray-600">
+                      Added: {item.dateAdded}
+                      {daysSinceAdded >= notificationPreferences.unusedItem && (
+                        <span className="text-blue-600 ml-2">
+                          (Unused for {daysSinceAdded} days)
+                        </span>
+                      )}
+                    </p>
+                    <p className={`text-sm ${expired ? 'text-red-600' :
+                      daysLeft <= notificationPreferences.expiration ? 'text-orange-600' :
+                        'text-gray-600'
+                      }`}>
+                      {expired
+                        ? `Expired ${Math.abs(daysLeft)} days ago`
+                        : daysLeft === 0
+                          ? "Expires today"
+                          : `Expires in ${daysLeft} days`}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+            {getNotificationItems().length === 0 && (
+              <Typography className="text-center text-gray-500 py-4">
+                No pending notifications
+              </Typography>
+            )}
+          </div>
+        </Box>
+      </Modal>
 
       <div className="max-w-[1024px] mx-auto p-4">
         {/* Dropdown */}
@@ -204,15 +373,14 @@ function Groceries() {
               <div
                 key={item.id}
                 onClick={() => handleItemClick(item)}
-                className={`bg-white rounded-lg shadow p-4 relative text-center ${
-                  expired
-                    ? "border border-red-400"
-                    : warning === "orange"
+                className={`bg-white rounded-lg shadow p-4 relative text-center ${expired
+                  ? "border border-red-400"
+                  : warning === "orange"
                     ? "border border-orange-400"
                     : blueWarning
-                    ? "border border-blue-400"
-                    : ""
-                } cursor-pointer max-w-52 item`}
+                      ? "border border-blue-400"
+                      : ""
+                  } cursor-pointer max-w-52 item`}
               >
                 {isNew && (
                   <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
@@ -236,13 +404,12 @@ function Groceries() {
                 )}
                 {blueWarning && (
                   <div
-                    className={`absolute ${
-                      warning === "red"
-                        ? "top-2 right-8"
-                        : warning === "orange"
+                    className={`absolute ${warning === "red"
+                      ? "top-2 right-8"
+                      : warning === "orange"
                         ? "top-2 right-8"
                         : "top-2 right-2"
-                    } bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded`}
+                      } bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded`}
                   >
                     !
                   </div>
@@ -260,13 +427,12 @@ function Groceries() {
                 </span>
 
                 <span
-                  className={`text-sm font-semibold ${
-                    expired
-                      ? "text-red-600"
-                      : warning === "orange"
+                  className={`text-sm font-semibold ${expired
+                    ? "text-red-600"
+                    : warning === "orange"
                       ? "text-orange-600"
                       : "text-gray-600"
-                  }`}
+                    }`}
                 >
                   {daysLeft !== null
                     ? daysLeft === 0
@@ -282,9 +448,8 @@ function Groceries() {
 
       {/* Sliding NavBar */}
       <div
-        className={`fixed top-0 right-0 h-full w-full bg-white transform transition-transform duration-300 ease-in-out ${
-          navBarOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed top-0 right-0 h-full w-full bg-white transform transition-transform duration-300 ease-in-out ${navBarOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <NavBar onBackToItems={toggleNavBar} />
       </div>
