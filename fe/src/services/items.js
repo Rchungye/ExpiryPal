@@ -6,6 +6,7 @@ export const getItemsByFridgeId = async (fridgeId) => {
   return ApiService.get(`/items/${fridgeId}`)
     .then((response) => response)
     .catch((response) => Promise.resolve(response));
+   
 };
 
 export const updateItemName = async (itemId, userId, newName) => {

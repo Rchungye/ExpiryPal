@@ -23,8 +23,8 @@ def GetItemsByFridgeId(fridge_id):
         JSON: A JSON response containing the item data and status code.
     """
 
-    result = ItemController.GetItemsByFridgeId(fridge_id=fridge_id)
-    return result.jsonify()
+    result = ItemController.getItemsByFridgeId(fridge_id=fridge_id)
+    return result
 
 @app.route("/items/<int:item_id>/updateName", methods=["PUT"])
 def updateItemName(item_id):
