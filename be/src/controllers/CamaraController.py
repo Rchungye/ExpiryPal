@@ -18,6 +18,7 @@ from io import BytesIO
 APP_ROOT = os.path.join(os.path.dirname(__file__), "..")
 dotenv_path = os.path.join(APP_ROOT, ".env")
 load_dotenv(dotenv_path)
+ml_endpoint = "http://127.0.0.1:5000/"
 
 
 def GetAllCameras():
@@ -79,7 +80,7 @@ def takeScreenshotAsBytes(page_url):
 
 def upload_image_to_cloudinary_from_bytes(image_bytes, fridge_id, tags=None ):
     """
-    Uploads an image to Cloudinary from bytes.
+    Uploads the image taken from the fridge to cloudinary 
 
     Args:
         image_bytes (BytesIO): Image in binary format.
@@ -108,7 +109,7 @@ def upload_image_to_cloudinary_from_bytes(image_bytes, fridge_id, tags=None ):
         return None
 
 
-def procesar_camara(entity_id, base_url, fridge_id):
+def upload_last_picture_from_fridgeCam_to_cloudinary(entity_id, base_url, fridge_id):
     """
     process the camera, take a screenshot, and upload it to Cloudinary.
     Args:
@@ -129,55 +130,83 @@ def procesar_camara(entity_id, base_url, fridge_id):
 
     try:
         # Capturar el pantallazo en memoria como bytes
-        print("Taking screenshot for fridge:", fridge_id, "from URL:", url_data["url"])
+        print("/nTaking screenshot for fridge:", fridge_id, "from URL:", url_data["url"])
         screenshot_bytes = takeScreenshotAsBytes(url_data["url"])
 
         if not screenshot_bytes:
             return {"status": 500, "message": "Screenshot not captured."}
 
         # Subir los bytes a Cloudinary
-        tags = [f"fridge_{fridge_id}", "screenshot"]
+        tags = [f"fridge_{fridge_id}", "last_image_from_fridge"]
         uploaded_url = upload_image_to_cloudinary_from_bytes(screenshot_bytes, fridge_id, tags=tags)
 
         if not uploaded_url:
             return {"status": 500, "message": "Error uploading image to Cloudinary."}
 
-        camera = Camera.query.filter_by(fridge_id=fridge_id).first()
-        if camera:
-            camera.previous_picture_url = camera.last_picture_url or uploaded_url  # Use the new image if no previous
-            camera.last_picture_url = uploaded_url
-            db.session.commit()
+        Camera.last_picture_url = uploaded_url
+        db.session.commit()
+        
 
-        return {"status": 200, "message": "Image uploaded successfully.", "uploaded_url": uploaded_url}
+        return {"status": 200, "message": "last_picture_url updated successfully.", "uploaded_url": uploaded_url}
 
     except Exception as err:
-        print(f"Error processing camera: {err}")
-        return {"status": 500, "message": f"Error processing camera: {err}"}
+        return {"status": 500, "message": f"Error updating last picture url in camera model: {err}"}
 
-def send_image_pair_to_ml(payload):
+
+def compare_items(payload):
     """
-    Send the previous and last picture URLs of a fridge to the ML model.
+    Send items in the fridge to the ML model for comparison with last picture taken from the fridge.
 
     Args:
-        payload (dict): Contains 'previous_img_url', 'last_img_url', and 'fridge_id'.
+        payload (dict): Contains 'items_in_fridge', 'last_img_url', and 'fridge_id'.
 
     Returns:
         dict: Response from the ML model.
     """
-    ml_endpoint = "http://127.0.0.1:5000/upload"
+
+    # print("\n\nSending items to ML model for comparison...\n")
+    # print("payload:", payload)
+    # print("\n\nPayload types before sending to ML model:")
+    # print_payload_types(payload)
+
+    for item in payload["items_in_fridge"]["payload"]:
+        for key, value in item.items():
+            if isinstance(value, (datetime, date)):
+                item[key] = value.isoformat()  # Convertir cualquier fecha a formato ISO
+
+    # print ("\n\nPayload types after converting dates to ISO:")
+    # print_payload_types(payload)
     try:
-        response = requests.post(ml_endpoint, json=payload)
+        route = f'{ml_endpoint}ml/compare_items_from_fridge'
+        response = requests.post(route, json=payload)
         if response.status_code == 200:
-            print("Image pair successfully processed by ML model.")
+            print("Image comparison successfully processed by ML model.")
             return response.json()
         else:
-            print(f"Error processing image pair in ML model: {response.text}")
+            print(f"Error processing comparison of items in ML model: {response.text}")
             return {"status": "error", "message": response.text}
     except Exception as e:
         print(f"Error connecting to ML model: {e}")
         return {"status": "error", "message": str(e)}
 
-    
+def print_payload_types(payload, level=0):
+    """
+    Imprime los tipos de datos en un payload de manera recursiva.
+    """
+    indent = "  " * level  # Indentación para niveles anidados
+    if isinstance(payload, dict):
+        print(f"{indent}Dict:")
+        for key, value in payload.items():
+            print(f"{indent}  {key}: {type(value)}")
+            print_payload_types(value, level + 1)
+    elif isinstance(payload, list):
+        print(f"{indent}List:")
+        for index, item in enumerate(payload):
+            print(f"{indent}  Index {index}: {type(item)}")
+            print_payload_types(item, level + 1)
+    else:
+        print(f"{indent}Value: {payload}, Type: {type(payload)}")
+
 def get_last_picture_url(camera_id):
     """
     Retrieve the last picture URL for a given camera.

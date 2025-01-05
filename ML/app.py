@@ -11,6 +11,10 @@ import cloudinary
 import requests
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
+import numpy as np
+import tempfile
+import uuid
+
 
 # Configuration       
 cloudinary.config( 
@@ -20,6 +24,7 @@ cloudinary.config(
     secure=True
 )
 
+backend_url = "http://127.0.0.1:5001/"
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -45,12 +50,15 @@ def extract_features(image):
     return features.cpu().numpy().flatten()
 
 
-def extract_items(image_path, model, fridge_id):
+def extract_items(image_path, model):
+    """
+    extract items from an image and return their data
+    """
     img = cv2.imread(image_path)
     img_contrast = enhance_contrast(img)
     results = model(img_contrast)
 
-    items_metadata = []
+    items = []
 
     for i, box in enumerate(results[0].boxes):
         x1, y1, x2, y2 = map(int, box.xyxy[0])
@@ -59,40 +67,78 @@ def extract_items(image_path, model, fridge_id):
 
         cropped_img = img[y1:y2, x1:x2]
 
-        # Convert cropped image to bytes for Cloudinary upload
         _, img_encoded = cv2.imencode('.jpg', cropped_img)
+        if img_encoded is None:
+            raise ValueError(f"Failed to encode cropped image for item {class_name}.")
+
+        # Convert encoded image to BytesIO
         image_bytes = BytesIO(img_encoded.tobytes())
+        image_bytes.seek(0)  # Ensure the stream is at the beginning
+        features = extract_features(cropped_img)
 
-        folder_path = f"Fridges/{fridge_id}/cropped_items"
-        try:
-            response = cloudinary.uploader.upload(
-                file=image_bytes,
-                folder=folder_path,
-                public_id=f"{class_name}_{i+1}"
-            )
-            items_metadata.append({
-                "name": class_name,
-                "image_url": response.get("url"),
-                "fridge_id": fridge_id
-            })
-        except Exception as e:
-            print(f"Error uploading fragment {class_name}_{i+1}: {e}")
+        items.append({
+            'name': class_name,
+            'features': features,
+            'image_bytes': image_bytes
+        })
 
-    print(f"Extracted Items Metadata: {items_metadata}")
-    return items_metadata
+    return items
 
 
-    #     output_path = os.path.join(output_folder, f"{class_name}_{i+1}.jpg")
-    #     cv2.imwrite(output_path, cropped_img)
+# def extract_items(image_path, model, fridge_id):
+#     img = cv2.imread(image_path)
+#     img_contrast = enhance_contrast(img)
+#     results = model(img_contrast)
 
-    #     features = extract_features(cropped_img)
-    #     items.append({'name': class_name, 'features': features, 'cropped_img': output_path})
+#     items = []
+#     output_folder = f"Fridges/{fridge_id}/cropped_items"
 
-    # return items
 
+#     for i, box in enumerate(results[0].boxes):
+#         x1, y1, x2, y2 = map(int, box.xyxy[0])
+#         class_id = int(box.cls)
+#         class_name = results[0].names[class_id]
+
+#         cropped_img = img[y1:y2, x1:x2]
+
+#         output_path = os.path.join(output_folder, f"{class_name}_{i+1}.jpg")
+#         cv2.imwrite(output_path, cropped_img)
+
+#         features = extract_features(cropped_img)
+#         items.append({'name': class_name, 'features': features, 'cropped_img': output_path})
+
+#     return items
+
+
+    #     # Convert cropped image to bytes for Cloudinary upload
+    #     _, img_encoded = cv2.imencode('.jpg', cropped_img)
+    #     image_bytes = BytesIO(img_encoded.tobytes())
+
+    #     folder_path = f"Fridges/{fridge_id}/cropped_items"
+    #     try:
+    #         response = cloudinary.uploader.upload(
+    #             file=image_bytes,
+    #             folder=folder_path,
+    #             public_id=f"{class_name}_{i+1}",
+    #             tags=["cropped_item_", i+1]
+    #         )
+    #         items_metadata.append({
+    #             "name": class_name,
+    #             "image_url": response.get("url"),
+    #             "fridge_id": fridge_id
+    #         })
+    #     except Exception as e:
+    #         print(f"Error uploading fragment {class_name}_{i+1}: {e}")
+
+    # print(f"Extracted Items Metadata: {items_metadata}")
+    # return items_metadata
+
+
+    
 
 # Function to compare items between two sets
 def compare_items(items1, items2, similarity_threshold=0.75):
+    print("\n\n\n****************in compare_items function")
     added_items = []
     removed_items = []
 
@@ -121,71 +167,229 @@ def compare_items(items1, items2, similarity_threshold=0.75):
     return added_items, removed_items
 
 
-# Function to upload image to Cloudinary
-def upload_to_cloudinary(file_path, folder_name):
-    response = cloudinary.uploader.upload(file_path, folder=folder_name)
-    return response['secure_url']
+def download_image_from_url(url):
+    """
+    downloads an image from a URL and returns it as a numpy array 
+    """
+    response = requests.get(url)
+    if response.status_code == 200:
+        image_bytes = BytesIO(response.content)
+        img_array = np.frombuffer(image_bytes.read(), np.uint8)
+        img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+        return img
+    else:
+        raise Exception(f"Error al descargar la imagen: {response.status_code}")
+
+def upload_to_cloudinary(file, folder_name, public_id=None):
+    if isinstance(file, BytesIO):
+        file.seek(0)  # Ensure the BytesIO stream is at the start
+    try:
+        response = cloudinary.uploader.upload(
+            file,
+            folder=folder_name,
+            public_id=public_id
+        )
+        return response['secure_url']
+    except Exception as e:
+        print(f"Error uploading to Cloudinary: {e}")
+        raise
 
 
 @app.route('/')
 def index():
     return render_template('index_dynamic.html')
-@app.route('/upload', methods=['POST'])
-def upload():
+
+@app.route('/ml/upload_items_if_first_time', methods=['POST'])
+def upload_items_if_first_time():
     """
-    Process two images, fragment items from the last image, and send their data to the backend.
+    Upload cropped items to Cloudinary if it is the first time the fridge is being used.
     """
     data = request.json
-    previous_img_url = data.get('previous_img_url')
-    last_img_url = data.get('last_img_url')
     fridge_id = data.get('fridge_id')
+    camera_id = data.get('camera_id')
+    last_picture_taken_from_fridge = data.get('last_img_url')
+    uploaded_items = []
 
-    print("DATA RECEIVED:", data)
+    if not fridge_id or not camera_id or not last_picture_taken_from_fridge:
+        return jsonify({'error': 'Missing required parameters'}), 400
 
-    # Validar parámetros
-    if not last_img_url or not isinstance(last_img_url, str):
-        return jsonify({'error': 'Invalid "last_img_url"'}), 400
-
-    if not fridge_id or not isinstance(fridge_id, int):
-        return jsonify({'error': 'Invalid "fridge_id"'}), 400
-
-    print("Parameters validated.")
+    if not last_picture_taken_from_fridge or not last_picture_taken_from_fridge.startswith("http"):
+        return jsonify({'error': 'Invalid last_picture_taken_from_fridge URL'}), 400
+   
+    
+    # Download the last picture taken from the fridge
     try:
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        last_img = download_image_from_url(last_picture_taken_from_fridge)
 
-        # Descargar y guardar la última imagen
-        print("Downloading last image...")
-        last_response = requests.get(last_img_url)
-        if last_response.status_code != 200:
-            return jsonify({'error': 'Failed to download last image'}), 400
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
+            temp_file_name = temp_file.name
+            cv2.imwrite(temp_file_name, last_img)
 
-        last_image_path = os.path.join(app.config['UPLOAD_FOLDER'], 'last_image.jpg')
-        with open(last_image_path, 'wb') as f:
-            f.write(last_response.content)
+        items = extract_items(temp_file_name, model)
 
-        # Extraer ítems de la última imagen
-        print("Extracting items from last image...")
-        last_items = extract_items(last_image_path, model, fridge_id)
+        for item in items:
+            if not isinstance(item['image_bytes'], BytesIO):
+                return jsonify({'error': f"Invalid image bytes for item {item['name']}"}), 500
 
-        print("Extracted Items from Last Image:", last_items)
+            public_id = str(uuid.uuid4())
+            uploaded_url = upload_to_cloudinary(
+                file=item['image_bytes'],  
+                folder_name=f"Fridges/{fridge_id}/cropped_items",
+                public_id=public_id
+            )
+            uploaded_items.append({
+                'name': item['name'],
+                'public_id': public_id,
+                'fridge_id': fridge_id,
+                'image_url': uploaded_url,
+            })
 
-        # Enviar `last_items` al backend
-        backend_url = "http://127.0.0.1:5001/items/add_batch"
-        backend_response = requests.post(backend_url, json={"items": last_items})
+            print(f"\nUploaded {item['name']} to {uploaded_url}")
+    except Exception as e:
+        return jsonify({'error': f'Error uploading images for the first time: {str(e)}'}), 500
+    
+    try:
+        print(f"Sending items to backend for fridge {fridge_id}")
+        print(f"Items: {uploaded_items}")
+        add_batch_be_url = f"{backend_url}items/add_items"
+        backend_response = requests.post(add_batch_be_url, json={"items": uploaded_items})
         if backend_response.status_code != 200:
             return jsonify({
                 'error': 'Error al enviar los datos al backend',
                 'details': backend_response.text
             }), backend_response.status_code
+    except Exception as e:
+        return jsonify({'error': f'Error sending items to backend: {str(e)}'}), 500
+    
+    return jsonify({'status': 'success', 'message': 'Cropped items uploaded successfully'})
+            
 
+# @app.route('/ml/extract_items', methods=['POST'])
+# def extract_items():
+#     """
+#     Extract items from an image and return their data.
+#     """
+#     data = request.json
+#     last_img_taken_from_fridge = data.get('last_img_taken_from_fridge')
+    
+
+
+@app.route('/ml/compare_items_from_fridge', methods=['POST'])
+def compare_items_from_fridge():
+    """
+    Process two images, fragment items from the last image, and send their data to the backend.
+    """
+    print("\n\nProcessing images and comparing items...\n")
+
+    data = request.json
+    items_in_fridge = data.get('items_in_fridge', {}).get('payload', [])    
+    last_picture_taken_from_fridge = data.get('last_img_url')
+    fridge_id = data.get('fridge_id')
+
+    if not last_picture_taken_from_fridge or not isinstance(last_picture_taken_from_fridge, str):
+        return jsonify({'error': 'Invalid "last_img_url"'}), 400
+
+    if not fridge_id or not isinstance(fridge_id, int):
+        return jsonify({'error': 'Invalid "fridge_id"'}), 400
+
+    if not items_in_fridge or not isinstance(items_in_fridge, list):
+        return jsonify({'error': 'Invalid "items_in_fridge"'}), 400
+    
+    print("parameters validated")
+
+    try:
+        last_img = download_image_from_url(last_picture_taken_from_fridge)
+
+        if last_img is None:
+            return jsonify({'error': 'Failed to download image from URL'}), 500
+        print("Image downloaded from URL")
+
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
+            temp_file_name = temp_file.name
+            cv2.imwrite(temp_file_name, last_img)
+        print("Image saved to temp file")
+
+        last_items = extract_items(temp_file_name, model)
+
+        for item in items_in_fridge:
+            img = download_image_from_url(item['imageURL'])
+
+            if img is None or not isinstance(img, np.ndarray):
+                print(f"Failed to download or invalid image format for URL: {item['imageURL']}")
+                continue
+            
+            img_contrast = enhance_contrast(img)
+
+            if img_contrast is None or not isinstance(img_contrast, np.ndarray):
+                print(f"Failed to enhance contrast for image from URL: {item['imageURL']}")
+                continue
+                        
+            _, img_encoded = cv2.imencode('.jpg', img_contrast)
+
+            image_bytes = BytesIO(img_encoded.tobytes())
+            image_bytes.seek(0)  
+
+
+            img_array = np.frombuffer(image_bytes.read(), np.uint8)
+            image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+
+            if image is None or not isinstance(image, np.ndarray):
+                print(f"Failed to decode image for item {item['name']}")
+                continue
+
+            print(f"Extracting features for item {item['name']}...")
+            item['features'] = extract_features(image)  # Usar BytesIO directamente
+
+        print("Items extracted from the fridge and last image")
+        print("Comparing items...")
+        print(f"number of items in fridge: {len(items_in_fridge)}")
+        print(f"number of items in last image: {len(last_items)}")
+        added_items, removed_items = compare_items(items_in_fridge, last_items)
+
+         # Logs de los resultados
+        print("\n\n*****************")
+        print("\nAdded items:")
+        for item in added_items:
+            print(item)
+        print("\nRemoved items:")
+        for item in removed_items:
+            print(item)
+            
+        for item in added_items:
+            item["fridge_id"] = fridge_id
+        for item in removed_items:
+            item["fridge_id"] = fridge_id
+
+        if added_items:
+            add_items_url = f"{backend_url}items/add_items"
+            payload = {"items": added_items}
+            response = requests.post(add_items_url, json=payload)   
+            if response.status_code != 200:
+                print(f"Error adding items: {response.text}")
+            else:
+                print(f"Added items successfully: {response.json()}")
+
+        if removed_items:
+            for item in removed_items:
+                item_id = item.get("id")
+                if not item_id:
+                    print(f"Missing item_id for item: {item}")
+                    continue
+
+                delete_item_url = f"{backend_url}/items/{item_id}"
+                response = requests.delete(delete_item_url)
+                if response.status_code != 200:
+                    print(f"Error deleting item {item_id}: {response.text}")
+                else:
+                    print(f"Deleted item {item_id} successfully.")
         return jsonify({
-            'status': 'success',
-            'last_items': last_items
-        })
+                    'status': 'success',
+                    'added_items': added_items,
+                    'removed_items': removed_items
+                }), 200
 
     except Exception as e:
         return jsonify({'error': 'Error processing images', 'details': str(e)}), 500
-
 
 # @app.route('/upload', methods=['POST'])
 # def upload():

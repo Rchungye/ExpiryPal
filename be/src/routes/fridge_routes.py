@@ -63,7 +63,7 @@ def link_user_to_fridge_route():
     # Llama a la lógica para vincular usuario y nevera
     result = Fridge.link_user_to_fridge(fridge_code)  
     return result
-
+    
 
 @app.route('/fridges/<string:fridge_code>/qr', methods=['GET'])
 def GetFridgeQr(fridge_code):

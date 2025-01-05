@@ -5,8 +5,10 @@ from flask import g, jsonify, request
 from src.models.user import User
 from src.controllers import (
     CamaraController as Camera,
+    ItemController as Item,
     HASSController as HASS
 )
+ml_endpoint = "http://127.0.0.1:5000/"
 
 
 @app.route("/camera/all", methods=["GET"])
@@ -36,7 +38,7 @@ def obtener_url_camara_route():
     resultado = HASS.obtener_url_camara(entity_id, base_url)
     return jsonify(resultado)
 
-@scheduler.task("interval", id="actualizar_url_camara", minutes=180)
+@scheduler.task("interval", id="actualizar_url_camara", minutes=1)
 def actualizar_url_camara_task():
     """
     Scheduled task to process cameras, upload images to Cloudinary, 
@@ -58,73 +60,87 @@ def actualizar_url_camara_task():
                 if not camera:
                     print(f"No camera found for fridge {fridge.id}.")
                     continue
-
-                # Obtener la última URL antes de actualizar
-                last_image_result = Camera.get_last_picture_url(camera.id)
-                if last_image_result.get("status") != "success":
-                    print(f"Error retrieving last image for camera {camera.id}: {last_image_result.get('message')}")
-                    last_image_url = None
-                else:
-                    last_image_url = last_image_result.get("last_picture_url")
-
-                # Procesar la cámara y actualizar el URL
+                
+                
                 base_url = "https://hass.mdu-smartroom.se"
-                result = Camera.procesar_camara(camera.entity_id, base_url, fridge.id)
+                result = Camera.upload_last_picture_from_fridgeCam_to_cloudinary(camera.entity_id, base_url, fridge.id)
 
-                if result["status"] == 200:
-                    print(f"Image uploaded successfully for fridge {fridge.id}: {result['uploaded_url']}")
+                if result.get("status") != 200:
+                    print(f"Error uploading last picture taken from camera {camera.id} of fridge {fridge.id} to cloudinary: {result.get('message')}")
+                    continue  
 
-                    # Obtener la nueva URL de la imagen
-                    new_image_url = result.get("uploaded_url")
-                    if not new_image_url:
-                        print(f"New image URL not found for fridge {fridge.id}. Skipping.")
-                        continue
+                uploaded_url = result.get("uploaded_url")
+                if not uploaded_url:
+                    print(f"Error: uploaded_url is missing in the response for fridge {fridge.id}")
+                    continue
 
-                    # Si no hay imagen previa, usar la nueva imagen para ambas
-                    if not last_image_url:
-                        print(f"No previous image available for fridge {fridge.id}. Using the new image as both.")
-                        last_image_url = new_image_url
-
-                    print(f"Previous image URL: {last_image_url}")
-                    print(f"New image URL: {new_image_url}")
-                    
+                print(f"Image from camera {camera.id} of fridge {fridge.id} successfully uploaded to cloudinary: {uploaded_url}")
+                
+                if not uploaded_url:
+                    print(f"New image URL not found for fridge {fridge.id}. Skipping.")
+                    continue
+                print(f"New image URL: {uploaded_url}")
+                
+                items_in_fridge = Item.getItemsByFridgeId(fridge.id)
+                
+                if not items_in_fridge["payload"]:
+                    print(f"No items found in fridge {fridge.id}. Uploading found items")
+                    ml_payload = {
+                        "fridge_id": fridge.id,
+                        "camera_id": camera.id,
+                        "last_img_url": uploaded_url
+                    }
+                    upload_cropped_items_if_first_time(ml_payload)
+                    return
+                else:
+                    print(f"Items found in fridge {fridge.id}... \n {items_in_fridge}\n\n")
                     # Enviar ambas imágenes al modelo ML
                     ml_payload = {
-                        "previous_img_url": last_image_url,
-                        "last_img_url": new_image_url,
+                        "last_img_url": uploaded_url,
+                        "items_in_fridge": items_in_fridge,
                         "fridge_id": fridge.id
                     }
-                    ml_result = Camera.send_image_pair_to_ml(ml_payload)
+
+                    ml_result = Camera.compare_items(ml_payload)
+
                     if ml_result.get("status") == "error":
                         print(f"Error sending image pair to ML model: {ml_result.get('message')}")
                     else:
                         print(f"ML model processed image pair for fridge {fridge.id}: {ml_result}")
-                else:
-                    print(f"Error for fridge {fridge.id}: {result['message']}")
-
-
+        
 @staticmethod
-def send_image_pair_to_ml(payload):
+def upload_cropped_items_if_first_time(payload):
     """
-    Send the previous and last picture URLs of a fridge to the ML model.
+    Upload cropped items to Cloudinary if it is the first time the fridge is being used.
 
     Args:
-        payload (dict): Contains 'previous_img_url', 'last_img_url', and 'fridge_id'.
+        payload (dict): Contains 'items', 'fridge_id', and 'camera_id'.
 
     Returns:
-        dict: Response from the ML model.
+        dict: Response from Cloudinary.
     """
-    ml_endpoint = "http://127.0.0.1:5000/upload"
+    fridge_id = payload.get("fridge_id")
+    camera_id = payload.get("camera_id")
+
+    if  not fridge_id or not camera_id:
+        return {"status": 400, "message": "Missing required parameters"}
+
+    last_picture_taken_from_fridge = Camera.get_last_picture_url(camera_id)
+    
+    if last_picture_taken_from_fridge["status"] == "error":
+        return {"status": 500, "message": "Error getting last picture URL from camera"}
+    
+    print("payload sent to ML: ", payload)
     try:
-        response = requests.post(ml_endpoint, json=payload)
+        response = requests.post(f"{ml_endpoint}ml/upload_items_if_first_time", json=payload)
         if response.status_code == 200:
-            print("Image pair successfully processed by ML model.")
-            return response.json()  # Devuelve la respuesta del modelo
+            print("Cropped items successfully uploaded to Cloudinary.")
+            return response.json()
         else:
-            print(f"Error processing image pair in ML model: {response.text}")
+            print(f"Error uploading cropped items to Cloudinary: {response.text}")
             return {"status": "error", "message": response.text}
     except Exception as e:
-        print(f"Error connecting to ML model: {e}")
+        print(f"Error uploading cropped items for the first time: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -137,8 +153,8 @@ def is_any_user_linked_to_a_fridge():
     """
     return db.session.query(User).join(User.fridges).count() > 0
 
-@app.route("/camera/<int:camera_id>/last_image", methods=["GET"])
 
+@app.route("/camera/<int:camera_id>/last_image", methods=["GET"])
 def get_last_image(camera_id):
     """
     Get the last picture URL taken by a specific camera.

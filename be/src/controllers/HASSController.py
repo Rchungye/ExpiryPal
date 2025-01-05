@@ -34,7 +34,7 @@ def get_camera_url(entity_id: str, base_url: str):
         token = state.attributes["access_token"]
         ret["url"] = f"{base_url}/fridge?token={token}"
         ret["status"] = 200
-        ret["message"] = "Camera URL obtained successfully."
+        ret["message"] = "\nCamera URL obtained successfully."
     except Exception as err:
         ret["message"] = f"Error while obtaining camera URL. {err}"
     return ret

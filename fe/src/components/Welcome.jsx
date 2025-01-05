@@ -2,19 +2,20 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { QrReader } from "react-qr-reader";
 import logo from "../assets/Fridge_logo.png";
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
-import Modal from '@mui/material/Modal';
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import Modal from "@mui/material/Modal";
+import { linkUserToFridge, checkUserLink } from "../services/api";
 
 const modalStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '90%',
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "90%",
   maxWidth: 400,
-  bgcolor: 'background.paper',
+  bgcolor: "background.paper",
   boxShadow: 24,
   p: 4,
   borderRadius: 2,
@@ -23,28 +24,51 @@ const modalStyle = {
 function Welcome() {
   const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
-  const [debugText, setDebugText] = useState('');
+  const [debugText, setDebugText] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLinked, setIsLinked] = useState(false);
   const qrRef = useRef(null);
   const [stream, setStream] = useState(null);
+
+  // Verifica el auth_token al montar el componente
+  useEffect(() => {
+    console.log("Welcome mounted, user link check...");
+    const checkAuthToken = async () => {
+      console.log("Checking auth token...");
+      try {
+        const response = await checkUserLink(); // Llama al nuevo endpoint
+        console.log("Check link response:", response.data);
+
+        if (response.status === 200 && response.data.isLinked) {
+          handleCloseModal(); // Detiene la cámara si está abierta
+          navigate("/fridge/groceries"); // Redirige al sistema si está vinculado
+        }
+      } catch (error) {
+        console.error("Error verifying user link:", error);
+        // No hacemos nada si no está vinculado, simplemente dejamos al usuario escanear el QR
+      }
+    };
+
+    checkAuthToken();
+  }, [navigate]);
 
   const stopCamera = () => {
     if (stream) {
       const tracks = stream.getTracks();
-      tracks.forEach(track => {
-        if (track.readyState === 'live') {
+      tracks.forEach((track) => {
+        if (track.readyState === "live") {
           track.stop();
         }
       });
       setStream(null);
     }
-
-    // También intentamos limpiar cualquier stream restante en los elementos de video
-    const videos = document.getElementsByTagName('video');
-    Array.from(videos).forEach(video => {
+  
+    const videos = document.getElementsByTagName("video");
+    Array.from(videos).forEach((video) => {
       if (video.srcObject) {
         const tracks = video.srcObject.getTracks();
-        tracks.forEach(track => {
-          if (track.readyState === 'live') {
+        tracks.forEach((track) => {
+          if (track.readyState === "live") {
             track.stop();
           }
         });
@@ -52,18 +76,21 @@ function Welcome() {
       }
     });
   };
+  
 
   const handleOpenModal = async () => {
     try {
       // Obtener acceso a la cámara
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
+        video: { facingMode: "environment" },
       });
       setStream(mediaStream);
       setOpenModal(true);
     } catch (err) {
       console.error("Error accessing camera:", err);
-      alert("Camera access is required to scan QR codes. Please enable camera access and try again.");
+      alert(
+        "Camera access is required to scan QR codes. Please enable camera access and try again."
+      );
     }
   };
 
@@ -71,46 +98,56 @@ function Welcome() {
     stopCamera();
     setOpenModal(false);
     setDebugText('');
+    setIsProcessing(false); // Restablece el procesamiento
+    setIsLinked(false); // Reinicia el estado de enlace
   };
+
+  let lastScannedCode = null;
 
   const handleScan = async (result, error) => {
-    if (!!result) {
-      setDebugText(`Scanned content: ${result.text}`);
+    if (!result || isProcessing || isLinked) return;
+    
+    const urlPattern = /[?&]code=([^&]+)/;
+    const match = result.text.match(urlPattern);
+    let code = match ? match[1] : result.text;
 
-      try {
-        const urlPattern = /[?&]code=([^&]+)/;
-        const match = result.text.match(urlPattern);
-        let code = match ? match[1] : result.text;
-
-        if (code) {
-          try {
-            const response = await fetch(`/link?code=${code}`, {
-              method: 'GET',
-              credentials: 'include',
-            });
-
-            if (response.ok) {
-              stopCamera();
-              setOpenModal(false);
-              navigate("/fridge/groceries");
-            } else {
-              const data = await response.json();
-              alert(data.error || "Failed to link with fridge");
-            }
-          } catch (error) {
-            console.error("Error linking fridge:", error);
-            alert("Failed to connect to the fridge. Please try again.");
-          }
-        }
-      } catch (err) {
-        console.error("QR Processing Error:", err);
-      }
+    // this is to prevent duplicate scans
+    if (code === lastScannedCode && !isLinked) {
+      console.log("Duplicate scan detected, skipping...");
+      return;
     }
 
-    if (!!error) {
-      console.error("QR Scan Error:", error);
+    lastScannedCode = code; // Almacena el último código procesado
+    setIsProcessing(true);
+    try {
+      if (code && !isLinked) {
+        const response = await linkUserToFridge(code);
+        console.log("Link user to fridge response:", response);
+        
+        if (response.status === 200) {
+          setIsLinked(true);
+          stopCamera();
+          handleCloseModal();
+          navigate("/fridge/groceries");
+
+        } else {
+          alert(response.data.error || "Failed to link with fridge");
+        }
+      } else {
+        alert("Invalid QR code format.");
+      }
+    } catch (err) {
+      console.error("Error linking fridge:", err);
+    } finally {
+      setIsProcessing(false);
+    }
+  
+    if (error && error.name !== "NotFoundException") {
+      console.error("QR Scan Error:", error.message);
+      setDebugText("Error scanning QR code. Please try again.");
     }
   };
+  
 
   // Cleanup cuando el componente se desmonta
   useEffect(() => {
@@ -137,8 +174,8 @@ function Welcome() {
           Stay fresh, Stay cool.
         </p>
       </div>
-      
-      <button 
+
+      <button
         onClick={handleOpenModal}
         className="bg-[#285D85] text-white font-poppins text-2xl py-5 px-12 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
       >
@@ -151,23 +188,28 @@ function Welcome() {
         aria-labelledby="qr-scanner-modal"
       >
         <Box sx={modalStyle}>
-          <Typography id="modal-modal-title" variant="h6" component="h2" className="mb-4 text-center">
+          <Typography
+            id="modal-modal-title"
+            variant="h6"
+            component="h2"
+            className="mb-4 text-center"
+          >
             Scan Fridge QR Code
           </Typography>
-          
+
           <div className="w-full">
-            {stream && (
+            {stream && openModal && (
               <QrReader
                 ref={qrRef}
                 constraints={{
-                  facingMode: 'environment',
+                  facingMode: "environment",
                   aspectRatio: 1,
                 }}
                 videoId="qr-video"
-                scanDelay={300}
+                scanDelay={3000}
                 onResult={handleScan}
                 className="w-full"
-                videoStyle={{ width: '100%' }}
+                videoStyle={{ width: "100%" }}
                 ViewFinder={() => (
                   <div className="border-2 border-blue-500 absolute top-0 left-0 right-0 bottom-0 z-10 pointer-events-none"></div>
                 )}
@@ -179,10 +221,10 @@ function Welcome() {
               </p>
             )}
           </div>
-          
-          <Button 
+
+          <Button
             onClick={handleCloseModal}
-            variant="contained" 
+            variant="contained"
             className="mt-4 bg-[#285D85]"
             fullWidth
           >

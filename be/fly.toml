@@ -1,7 +1,4 @@
-app = "app.py"
-
-[build]
-  image = "nombre-de-tu-imagen:version"
+app = "expirypal"
 
 [env]
   PORT = "8080"
