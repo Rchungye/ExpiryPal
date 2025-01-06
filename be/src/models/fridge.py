@@ -16,6 +16,7 @@ class Fridge(db.Model):
     cameras = db.relationship('Camera', backref='fridge')
     items = db.relationship('Item', backref='fridge')
     users = db.relationship('User', secondary=fridge_user, back_populates='fridges')
+    last_link_attempt = db.Column(db.DateTime, nullable=True)
     
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

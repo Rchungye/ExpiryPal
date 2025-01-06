@@ -42,7 +42,8 @@ function Groceries() {
     const fetchItems = async () => {
       try {
         const response = await getItemsByFridgeId(fridgeId);
-        const transformedItems = response.data.map((item) => ({
+        console.log(response);
+        const transformedItems = response.data.payload.map((item) => ({
           id: item.id,
           name: item.name || `Item ${item.id}`,
           image: item.imageURL || "/items/default.png",
