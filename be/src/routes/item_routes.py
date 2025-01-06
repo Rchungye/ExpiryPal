@@ -95,6 +95,7 @@ def add_items():
     Returns:
         JSON with the result of the operation.
     """
+    print("\n\n\nRequest JSON: ", request.json)
     try:
         if "items" not in request.json:
             return {"error": "Missing required parameters"}, 400
@@ -102,17 +103,25 @@ def add_items():
         return {"message": "Items added successfully"}, 200
     except Exception as e:
         return {"error": f"Error adding items to the database: {e}"}, 500
-    
+
+
 @app.route('/items/<int:item_id>', methods=['DELETE'])
 def delete_item(item_id):
     """
-    Delete an item from the database.
-
-    Args:
-        item_id (int): The ID of the item to delete.
-
-    Returns:
-        JSON with the result of the operation.
+    Delete an item by its ID.
     """
-    result = ItemController.delete_item(item_id)
-    return jsonify(result)
+    print(f"\n\nIn deleteItem function from ItemController.py. Deleting item with ID: {item_id}")
+    
+    item = Item.query.get(item_id)
+    if not item:
+        return {"error": "Item not found"}, 404
+
+    try:
+        db.session.delete(item)
+        db.session.commit()
+        print(f"Item {item_id} deleted successfully.")
+        return {"message": f"Item {item_id} deleted successfully"}, 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting item {item_id}: {e}")
+        return {"error": f"Error deleting item {item_id}: {str(e)}"}, 500

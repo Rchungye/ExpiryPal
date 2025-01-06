@@ -5,6 +5,8 @@ from src import app, db
 from src.models.item import Item
 
 def deleteItem(item_id):
+    print("\n\nIn deleteItem function from ItemController.py")
+    
     item = Item.query.get(item_id)
     if not item:
         return {"error": "Item not found"}, 404

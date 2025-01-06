@@ -49,8 +49,64 @@ def extract_features(image):
         features = clip_model.get_image_features(**inputs)
     return features.cpu().numpy().flatten()
 
+alpha = 3.0
+beta = 30.0
 
 def extract_items(image_path, model):
+    img = cv2.imread(image_path)  # Read the image in color (default)
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convert to grayscale
+
+    # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))  # Adjust clipLimit and tileGridSize as needed
+    img_clahe = clahe.apply(img_gray)  # Apply CLAHE to the grayscale image
+
+    # Convert the CLAHE-enhanced grayscale image to 3-channel format (RGB)
+    img_clahe_rgb = cv2.cvtColor(img_clahe, cv2.COLOR_GRAY2BGR)  # Convert to RGB (3 channels)
+
+    #Enhance contrast on the CLAHE image
+    img_contrast = enhance_contrast(img_clahe_rgb, alpha, beta)
+
+    # Pass the enhanced image to the YOLO model
+    results = model(img_contrast)
+    #os.makedirs(output_folder, exist_ok=True)
+
+    items = []
+    for i, box in enumerate(results[0].boxes):
+        x1, y1, x2, y2 = map(int, box.xyxy[0])
+        class_id = int(box.cls)
+        class_name = results[0].names[class_id]
+
+        # Crop the CLAHE-enhanced grayscale image
+        cropped_img = img_clahe[y1:y2, x1:x2]
+        #output_path = os.path.join(output_folder, f"{class_name}{i+1}.jpg")
+       # cv2.imwrite(output_path, cropped_img)
+
+        # Extract CLIP features
+        features = extract_features(cropped_img)
+
+        _, img_encoded = cv2.imencode('.jpg', cropped_img)
+        if img_encoded is None:
+            raise ValueError(f"Failed to encode cropped image for item {class_name}.")
+
+        # Convert encoded image to BytesIO
+        image_bytes = BytesIO(img_encoded.tobytes())
+        image_bytes.seek(0)  # Ensure the stream is at the beginning
+        features = extract_features(cropped_img)
+
+        items.append({
+            'name': class_name,
+            #path': output_path,
+            'features': features,
+            'image': image_bytes  # Store image for visualization
+        })
+
+      #  print(f"Saved {output_path}")
+
+    return items
+
+
+
+def extractitems(image_path, model):
     """
     extract items from an image and return their data
     """
@@ -225,18 +281,22 @@ def upload_items_if_first_time():
             temp_file_name = temp_file.name
             cv2.imwrite(temp_file_name, last_img)
 
+        print(f"Extracting items from the last image taken from the fridge...")
         items = extract_items(temp_file_name, model)
-
         for item in items:
-            if not isinstance(item['image_bytes'], BytesIO):
-                return jsonify({'error': f"Invalid image bytes for item {item['name']}"}), 500
-
+            print("in for loop")
+           
             public_id = str(uuid.uuid4())
+            print(f"Uploading {item['name']} to Cloudinary...")
+            print(item['image'])
+            print(item['name'])
+            print("lllolololol")
             uploaded_url = upload_to_cloudinary(
-                file=item['image_bytes'],  
+                file=item['image'],  
                 folder_name=f"Fridges/{fridge_id}/cropped_items",
                 public_id=public_id
             )
+            print(f"\nUploaded {item['name']} to {uploaded_url}")
             uploaded_items.append({
                 'name': item['name'],
                 'public_id': public_id,
@@ -272,7 +332,15 @@ def upload_items_if_first_time():
 #     data = request.json
 #     last_img_taken_from_fridge = data.get('last_img_taken_from_fridge')
     
-
+def convert_ndarray_to_list(items):
+    """
+    Recursively converts numpy.ndarray values in a list of dictionaries to lists.
+    """
+    for item in items:
+        for key, value in item.items():
+            if isinstance(value, np.ndarray):
+                item[key] = value.tolist()  # Convert ndarray to list
+    return items
 
 @app.route('/ml/compare_items_from_fridge', methods=['POST'])
 def compare_items_from_fridge():
@@ -329,7 +397,6 @@ def compare_items_from_fridge():
             image_bytes = BytesIO(img_encoded.tobytes())
             image_bytes.seek(0)  
 
-
             img_array = np.frombuffer(image_bytes.read(), np.uint8)
             image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
 
@@ -338,7 +405,7 @@ def compare_items_from_fridge():
                 continue
 
             print(f"Extracting features for item {item['name']}...")
-            item['features'] = extract_features(image)  # Usar BytesIO directamente
+            item['features'] = extract_features(image)
 
         print("Items extracted from the fridge and last image")
         print("Comparing items...")
@@ -346,30 +413,51 @@ def compare_items_from_fridge():
         print(f"number of items in last image: {len(last_items)}")
         added_items, removed_items = compare_items(items_in_fridge, last_items)
 
-         # Logs de los resultados
-        print("\n\n*****************")
-        print("\nAdded items:")
-        for item in added_items:
-            print(item)
-        print("\nRemoved items:")
-        for item in removed_items:
-            print(item)
-            
-        for item in added_items:
-            item["fridge_id"] = fridge_id
-        for item in removed_items:
-            item["fridge_id"] = fridge_id
+        print(f"Added items: {len(added_items)}")
+        print(f"Removed items: {len(removed_items)}")   
 
+        # Upload images of added items to Cloudinary and replace the image bytes with URLs
+        for item in added_items:
+            item["fridge_id"] = fridge_id
+            image_bytes = item.pop('image', None)
+            if image_bytes:
+                try:
+                    public_id = str(uuid.uuid4())
+                    uploaded_url = upload_to_cloudinary(
+                        file=image_bytes,
+                        folder_name=f"Fridges/{fridge_id}/added_items",
+                        public_id=public_id
+                    )
+                    item['image_url'] = uploaded_url
+                    print(f"Uploaded image for item {item['name']} to {uploaded_url}")
+                except Exception as e:
+                    print(f"Error uploading image for item {item['name']}: {e}")
+                    continue
+
+        for item in removed_items:
+            item["fridge_id"] = fridge_id
+            item.pop('features', None)  # Remove 'features' key
+        
+        for item in added_items:
+            item.pop('features', None)  # Remove 'features' key
+
+
+        print("after for loop")
         if added_items:
+            print("\n\nAdding items to the backend...")
             add_items_url = f"{backend_url}items/add_items"
+            print("be url: ", add_items_url) 
+            print("added items: ", added_items)
             payload = {"items": added_items}
-            response = requests.post(add_items_url, json=payload)   
+            response = requests.post(add_items_url, json=payload)  
+            print("response: ", response) 
             if response.status_code != 200:
                 print(f"Error adding items: {response.text}")
             else:
                 print(f"Added items successfully: {response.json()}")
 
         if removed_items:
+            print("\n\nRemoving items from the backend...")
             for item in removed_items:
                 item_id = item.get("id")
                 if not item_id:
@@ -377,7 +465,10 @@ def compare_items_from_fridge():
                     continue
 
                 delete_item_url = f"{backend_url}/items/{item_id}"
+                print(f"Deleting item {item_id} from the backend...")
+                print("delete url: ", delete_item_url)
                 response = requests.delete(delete_item_url)
+                print("response: ", response)
                 if response.status_code != 200:
                     print(f"Error deleting item {item_id}: {response.text}")
                 else:
