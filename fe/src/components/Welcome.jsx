@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { QrReader } from "react-qr-reader";
+import QRScanner from "./scanner";
 import logo from "../assets/Fridge_logo.png";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -27,141 +27,74 @@ function Welcome() {
   const [debugText, setDebugText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLinked, setIsLinked] = useState(false);
-  const qrRef = useRef(null);
-  const [stream, setStream] = useState(null);
 
-  // Verifica el auth_token al montar el componente
   useEffect(() => {
-    console.log("Welcome mounted, user link check...");
     const checkAuthToken = async () => {
-      console.log("Checking auth token...");
       try {
-        const response = await checkUserLink(); // Llama al nuevo endpoint
-        console.log("Check link response:", response.data);
-
-        if (response.status === 200 && response.data.isLinked) {
-          handleCloseModal(); // Detiene la cámara si está abierta
-          navigate("/fridge/groceries"); // Redirige al sistema si está vinculado
+        const response = await checkUserLink();
+        console.log("isLinked:", response);
+        if (response.status === 200) {
+          navigate("/fridge/groceries");
         }
       } catch (error) {
         console.error("Error verifying user link:", error);
-        // No hacemos nada si no está vinculado, simplemente dejamos al usuario escanear el QR
       }
     };
-
     checkAuthToken();
   }, [navigate]);
 
-  const stopCamera = () => {
-    if (stream) {
-      const tracks = stream.getTracks();
-      tracks.forEach((track) => {
-        if (track.readyState === "live") {
-          track.stop();
-        }
-      });
-      setStream(null);
-    }
-  
-    const videos = document.getElementsByTagName("video");
-    Array.from(videos).forEach((video) => {
-      if (video.srcObject) {
-        const tracks = video.srcObject.getTracks();
-        tracks.forEach((track) => {
-          if (track.readyState === "live") {
-            track.stop();
-          }
-        });
-        video.srcObject = null;
-      }
-    });
-  };
-  
-
-  const handleOpenModal = async () => {
-    try {
-      // Obtener acceso a la cámara
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      setStream(mediaStream);
-      setOpenModal(true);
-    } catch (err) {
-      console.error("Error accessing camera:", err);
-      alert(
-        "Camera access is required to scan QR codes. Please enable camera access and try again."
-      );
-    }
+  const handleOpenModal = () => {
+    setOpenModal(true);
   };
 
   const handleCloseModal = () => {
-    stopCamera();
     setOpenModal(false);
-    setDebugText('');
-    setIsProcessing(false); // Restablece el procesamiento
-    setIsLinked(false); // Reinicia el estado de enlace
+    setDebugText("");
+    setIsProcessing(false);
+    setIsLinked(false);
   };
 
   let lastScannedCode = null;
 
-  const handleScan = async (result, error) => {
+  const handleScanResult = async (result) => {
     if (!result || isProcessing || isLinked) return;
-    
+  
     const urlPattern = /[?&]code=([^&]+)/;
-    const match = result.text.match(urlPattern);
-    let code = match ? match[1] : result.text;
-
-    // this is to prevent duplicate scans
-    if (code === lastScannedCode && !isLinked) {
+    const match = result.match(urlPattern);
+    const code = match ? match[1] : result;
+  
+    if (code === lastScannedCode) {
       console.log("Duplicate scan detected, skipping...");
       return;
     }
-
-    lastScannedCode = code; // Almacena el último código procesado
+  
+    lastScannedCode = code;
     setIsProcessing(true);
+  
     try {
-      if (code && !isLinked) {
-        const response = await linkUserToFridge(code);
-        console.log("Link user to fridge response:", response);
-        
-        if (response.status === 200) {
-          setIsLinked(true);
-          stopCamera();
-          handleCloseModal();
-          navigate("/fridge/groceries");
-
-        } else {
-          alert(response.data.error || "Failed to link with fridge");
-        }
+      const response = await linkUserToFridge(code);
+      if (response.status === 200) {
+        setIsLinked(true);
+        handleCloseModal();
+        navigate("/fridge/groceries");
       } else {
-        alert("Invalid QR code format.");
+        alert(response.data.error || "Failed to link with fridge");
       }
-    } catch (err) {
-      console.error("Error linking fridge:", err);
+    } catch (error) {
+      console.error("Error linking fridge:", error);
     } finally {
       setIsProcessing(false);
     }
+  };
   
-    if (error && error.name !== "NotFoundException") {
-      console.error("QR Scan Error:", error.message);
+  const handleScanError = (error) => {
+    // Filtrar NotFoundException para no loguear continuamente
+    if (error.name !== "NotFoundException") {
+      console.error("QR Scan Error:", error);
       setDebugText("Error scanning QR code. Please try again.");
     }
   };
   
-
-  // Cleanup cuando el componente se desmonta
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
-
-  // Cleanup cuando el modal se cierra
-  useEffect(() => {
-    if (!openModal) {
-      stopCamera();
-    }
-  }, [openModal]);
 
   return (
     <div className="flex flex-col items-center justify-between h-screen bg-white pb-40">
@@ -198,22 +131,12 @@ function Welcome() {
           </Typography>
 
           <div className="w-full">
-            {stream && openModal && (
-              <QrReader
-                ref={qrRef}
-                constraints={{
-                  facingMode: "environment",
-                  aspectRatio: 1,
-                }}
-                videoId="qr-video"
-                scanDelay={3000}
-                onResult={handleScan}
-                className="w-full"
-                videoStyle={{ width: "100%" }}
-                ViewFinder={() => (
-                  <div className="border-2 border-blue-500 absolute top-0 left-0 right-0 bottom-0 z-10 pointer-events-none"></div>
-                )}
-              />
+            {openModal && (
+              <QRScanner
+              onScan={handleScanResult}
+              onError={handleScanError}
+            />
+            
             )}
             {debugText && (
               <p className="mt-2 text-sm text-gray-600 text-center break-words">
