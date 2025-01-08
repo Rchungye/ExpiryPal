@@ -6,7 +6,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
-import { linkUserToFridge, checkUserLink } from "../services/api";
+import { linkUserToFridge, checkUserLink, getCookies} from "../services/api";
 
 const modalStyle = {
   position: "absolute",
@@ -29,6 +29,17 @@ function Welcome() {
   const [isLinked, setIsLinked] = useState(false);
 
   useEffect(() => {
+    const fetchCookies = async () => {
+      console.log("Getting cookies...");
+      try {
+        const response = await getCookies();
+        console.log("Cookies:", response);
+      } catch (error) {
+        console.error("Error getting cookies:", error);
+      }
+    };
+    fetchCookies();
+
     const checkAuthToken = async () => {
       try {
         const response = await checkUserLink();

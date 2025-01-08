@@ -85,7 +85,11 @@ def check_user_link():
     """
     Verifica si el usuario ya está vinculado a un refrigerador.
     """
-    user = Fridge.get_user_from_cookie()
+    auth_token = request.cookies.get('auth_token')
+    print("\n\n\n***********************************")
+    print(auth_token)
+
+    user = Fridge.get_user_from_cookie(auth_token)
     print("\n\n\n***********************************")
     print(user)
     if not user or not user.fridges:

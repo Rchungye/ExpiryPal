@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 from src import app, db
 from src.models.fridge import Fridge, fridge_user
 from src.models.camera import Camera
+from src.models.user import User
 import qrcode
 from io import BytesIO
 import base64
@@ -14,99 +15,84 @@ from flask import jsonify, make_response, request
 from math import floor
 from sqlalchemy.orm import joinedload
 
-
 APP_ROOT = os.path.join(os.path.dirname(__file__), "..")
 dotenv_path = os.path.join(APP_ROOT, ".env")
 load_dotenv(dotenv_path)
 RUNNING_SERVER_IP = os.getenv("RUNNING_SERVER_IP")
-SECRET_KEY = "a70bdb3ac58cedf0a4e0a13836ee06c3ee9d73ec0ffdef981b27dabf119495ca"
 
-def get_user_from_cookie():
+def get_user_from_cookie(auth_token):
     """
     Obtiene al usuario decodificando el JWT de la cookie.
     """
-    auth_token = request.cookies.get('auth_token')
     if not auth_token:
+        print("No auth_token provided")
         return None
 
-    user_id = decode_jwt(auth_token)
+    user_payload = User.decode_jwt(auth_token)
+    print(user_payload)
+    user_id = user_payload.get("user_id")
     if not user_id:
+        print("Invalid or expired token")
         return None
 
-    return User.query.get(user_id)
+    user = User.query.get(user_id)
+    if not user:
+        print(f"User not found for user_id: {user_id}")
+    return user
+
 
 def is_duplicate_request(auth_token):
     """
     Verifica si la solicitud es duplicada basándose en el `iat` del JWT.
     """
-    user_id = decode_jwt(auth_token)
+    user_id = User.decode_jwt(auth_token)
     if not user_id:
         return False
 
-    payload = jwt.decode(auth_token, SECRET_KEY, algorithms=["HS256"])
+    payload = User.decode_jwt(auth_token)
     last_attempt = payload.get("iat")
     if not last_attempt:
         return False
 
-    now = int(datetime.utcnow().timestamp())
+    now = int(datetime.now(timezone.utc).timestamp())
     if now - last_attempt < 5:
         return True  # Es duplicada
     return False
-
-def generate_jwt(user_id):
-    """
-    Genera un token JWT con un nuevo `iat`.
-    """
-    payload = {
-        "user_id": user_id,
-        "iat": int(datetime.utcnow().timestamp()),  # Marca de tiempo actual
-        "exp": datetime.utcnow() + timedelta(days=180)  # Expira en 6 meses
-    }
-    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-
-def decode_jwt(token):
-    """
-    Decodifica el JWT para obtener el ID del usuario.
-    """
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload["user_id"]
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
 
 def link_user_to_fridge(fridge_code):
     """
     Vincula al usuario con el refrigerador mediante un código QR.
     """
+    print(f"Linking user to fridge with code: {fridge_code}")
+
+    # Verifica que el refrigerador existe
     fridge = Fridge.query.filter_by(code=fridge_code).first()
     if not fridge:
+        print("Fridge not found")
         return make_response(jsonify({"error": "Fridge not found"}), 404)
 
-    auth_token = request.cookies.get('auth_token')
-    if not auth_token:
-        return make_response(jsonify({"error": "Authentication required"}), 401)
-
-    if is_duplicate_request(auth_token):
-        return make_response(jsonify({"error": "Duplicate request detected"}), 429)
-
-    user = get_user_from_cookie()
-    if not user:
-        user = User(username="ExpiryUser")
-        db.session.add(user)
-        db.session.commit()
-
-    # Actualiza el JWT con un nuevo `iat`
-    user.auth_token = generate_jwt(user.id)
+    user = User(username="ExpiryUser")
+    db.session.add(user)
+    db.session.commit()
+    print("User created")
+    # Genera un nuevo JWT para el usuario
+    auth_token = User.generate_auth_token(user)
+    user.auth_token = auth_token
     db.session.commit()
 
+    # Verifica solicitudes duplicadas
+    # if is_duplicate_request(auth_token):
+    #     print("Duplicate request detected")
+    #     return make_response(jsonify({"error": "Duplicate request detected"}), 429)
+
+    # Vincula el usuario al refrigerador si no está ya vinculado
     if fridge not in user.fridges:
         user.fridges.append(fridge)
         db.session.commit()
     else:
         return make_response(jsonify({"message": "Already linked"}), 200)
 
+    # Devuelve una respuesta con la cookie del auth_token
     response = make_response(jsonify({"message": "Linked successfully"}), 200)
     response.set_cookie(
         'auth_token',
@@ -114,7 +100,7 @@ def link_user_to_fridge(fridge_code):
         httponly=True,
         samesite='None',
         secure=True,
-        max_age=60 * 60 * 24 * 30 * 6
+        max_age=60 * 60 * 24 * 30 * 6  # 6 meses
     )
     return response
 
@@ -122,7 +108,9 @@ def link_user_to_fridge(fridge_code):
 def GetAllFridges():
     fridges = Fridge.query.all()
     return ControllerObject(
-        payload=[fridges.as_dict() for Fridge in fridges], status=200)
+        payload=[fridge.as_dict() for fridge in fridges],
+        status=200
+    )
 
 @staticmethod
 def GetCamerasByFridgeId(fridge_id):

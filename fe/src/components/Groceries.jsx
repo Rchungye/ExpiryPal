@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import NavBar from "./NavBar";
 import ItemModal from "./ItemModal";
 import { getItemsByFridgeId } from "../services/items";
@@ -6,11 +6,13 @@ import { getNotificationPreferences } from "../services/notificationService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
+import { generateToken, messaging } from "../notifications/firebase";
+import { onMessage } from "firebase/messaging";
 
 function Groceries() {
+  
   const [navBarOpen, setNavBarOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -39,6 +41,13 @@ function Groceries() {
   };
 
   useEffect(() => {
+    generateToken();
+    onMessage(messaging, (payload) => {
+      console.log('Message received. ', payload);
+    })
+  }, []);
+  useEffect(() => {
+
     const fetchItems = async () => {
       try {
         const response = await getItemsByFridgeId(fridgeId);
