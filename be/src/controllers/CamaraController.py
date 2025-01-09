@@ -130,7 +130,7 @@ def upload_last_picture_from_fridgeCam_to_cloudinary(entity_id, base_url, fridge
 
     try:
         # Capturar el pantallazo en memoria como bytes
-        print("/nTaking screenshot for fridge:", fridge_id, "from URL:", url_data["url"])
+        # print("/nTaking screenshot for fridge:", fridge_id, "from URL:", url_data["url"])
         screenshot_bytes = takeScreenshotAsBytes(url_data["url"])
 
         if not screenshot_bytes:

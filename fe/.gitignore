@@ -27,3 +27,4 @@ cypress*
 .env
 .env.local
 .env.*.local
+.vercel

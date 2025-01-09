@@ -19,4 +19,8 @@ class Fridge(db.Model):
     last_link_attempt = db.Column(db.DateTime, nullable=True)
     
     def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        data = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        data['users'] = [user.id for user in self.users]  # Lista de IDs o usa `user.as_dict()`
+        data['items'] = [item.id for item in self.items]
+        data['cameras'] = [camera.id for camera in self.cameras]
+        return data

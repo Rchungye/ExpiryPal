@@ -4,26 +4,113 @@ from datetime import datetime, timezone, timedelta
 from src import app, db
 from src.models.fridge import Fridge, fridge_user
 from src.models.camera import Camera
+from src.models.user import User
 import qrcode
 from io import BytesIO
 import base64
 import os
+import jwt
 from dotenv import load_dotenv
 from flask import jsonify, make_response, request
 from math import floor
-
-
+from sqlalchemy.orm import joinedload
 
 APP_ROOT = os.path.join(os.path.dirname(__file__), "..")
 dotenv_path = os.path.join(APP_ROOT, ".env")
 load_dotenv(dotenv_path)
 RUNNING_SERVER_IP = os.getenv("RUNNING_SERVER_IP")
 
+def get_user_from_cookie(auth_token):
+    """
+    Obtiene al usuario decodificando el JWT de la cookie.
+    """
+    if not auth_token:
+        print("No auth_token provided")
+        return None
+
+    user_payload = User.decode_jwt(auth_token)
+    print(user_payload)
+    user_id = user_payload.get("user_id")
+    if not user_id:
+        print("Invalid or expired token")
+        return None
+
+    user = User.query.get(user_id)
+    if not user:
+        print(f"User not found for user_id: {user_id}")
+    return user
+
+
+def is_duplicate_request(auth_token):
+    """
+    Verifica si la solicitud es duplicada basándose en el `iat` del JWT.
+    """
+    user_id = User.decode_jwt(auth_token)
+    if not user_id:
+        return False
+
+    payload = User.decode_jwt(auth_token)
+    last_attempt = payload.get("iat")
+    if not last_attempt:
+        return False
+
+    now = int(datetime.now(timezone.utc).timestamp())
+    if now - last_attempt < 5:
+        return True  # Es duplicada
+    return False
+
+def link_user_to_fridge(fridge_code):
+    """
+    Vincula al usuario con el refrigerador mediante un código QR.
+    """
+    print(f"Linking user to fridge with code: {fridge_code}")
+
+    # Verifica que el refrigerador existe
+    fridge = Fridge.query.filter_by(code=fridge_code).first()
+    if not fridge:
+        print("Fridge not found")
+        return make_response(jsonify({"error": "Fridge not found"}), 404)
+
+    user = User(username="ExpiryUser")
+    db.session.add(user)
+    db.session.commit()
+    print("User created")
+    # Genera un nuevo JWT para el usuario
+    auth_token = User.generate_auth_token(user)
+    user.auth_token = auth_token
+    db.session.commit()
+
+    # Verifica solicitudes duplicadas
+    # if is_duplicate_request(auth_token):
+    #     print("Duplicate request detected")
+    #     return make_response(jsonify({"error": "Duplicate request detected"}), 429)
+
+    # Vincula el usuario al refrigerador si no está ya vinculado
+    if fridge not in user.fridges:
+        user.fridges.append(fridge)
+        db.session.commit()
+    else:
+        return make_response(jsonify({"message": "Already linked"}), 200)
+
+    # Devuelve una respuesta con la cookie del auth_token
+    response = make_response(jsonify({"message": "Linked successfully"}), 200)
+    response.set_cookie(
+        'auth_token',
+        user.auth_token,
+        httponly=True,
+        samesite='None',
+        secure=True,
+        max_age=60 * 60 * 24 * 30 * 6  # 6 meses
+    )
+    return response
+
 
 def GetAllFridges():
     fridges = Fridge.query.all()
     return ControllerObject(
-        payload=[fridges.as_dict() for Fridge in fridges], status=200)
+        payload=[fridge.as_dict() for fridge in fridges],
+        status=200
+    )
 
 @staticmethod
 def GetCamerasByFridgeId(fridge_id):
@@ -55,127 +142,6 @@ def GetNotificationPreferencesByFridgeId(fridge_id):
         payload=preferences,
         status=200
     )
-
-
-from datetime import datetime, timezone, timedelta
-from math import floor
-from flask import jsonify, make_response, request
-
-def link_user_to_fridge(fridge_code):
-    """
-    Links a user to a fridge via the scanned QR code.
-
-    Args:
-        fridge_code (str): The unique code of the fridge.
-
-    Returns:
-        A message indicating the success or failure of the operation.
-    """
-    # Look up the fridge by its unique code
-    fridge = Fridge.query.filter_by(code=fridge_code).first()
-    if not fridge:
-        return make_response(
-            jsonify({"error": "Fridge not found"}), 
-            404
-        )
-
-    # Validate that the request is not a duplicate
-    now = datetime.now(timezone.utc)
-    if fridge.last_link_attempt:
-        # Ensure last_link_attempt is timezone-aware
-        last_attempt = fridge.last_link_attempt
-        if last_attempt.tzinfo is None:  # If naive, make it timezone-aware
-            last_attempt = last_attempt.replace(tzinfo=timezone.utc)
-        
-        # Calculate time difference in whole seconds
-        time_diff = (now - last_attempt).total_seconds()
-        print(f"Time difference (seconds): {time_diff}")
-        
-        if time_diff < 5:
-            print("Duplicate request detected")
-            return make_response(
-                jsonify({
-                    "error": f"Duplicate request detected. Please wait {5 - floor(time_diff)} seconds."
-                }), 
-                429
-            )
-
-    # Get the user from the auth token
-    auth_token = request.cookies.get('auth_token')
-    user = None
-    if auth_token:
-        user = User.query.filter_by(auth_token=auth_token).first()
-
-    # If the user does not exist, create a new one
-    if not user:
-        user = User(username="ExpiryUser")
-        user.generate_auth_token()
-        db.session.add(user)
-        db.session.commit()
-
-    # Link the user to the fridge
-    if fridge not in user.fridges:
-        user.fridges.append(fridge)
-        # Update the last link attempt after a successful process
-        fridge.last_link_attempt = now
-        db.session.commit()
-    else:
-        return make_response(
-            jsonify({"message": "User is already linked to this fridge"}), 
-            200
-        )
-
-    # Generate a response with the auth token
-    response = make_response(
-        jsonify({"message": "User successfully linked to fridge", "auth_token": user.auth_token}), 
-        200
-    )
-
-    max_age_6_months = 60 * 60 * 24 * 30 * 6
-    # samesite needs to be evaluated
-    # http only needs to be changed to True, but it is False for testing purposes
-
-    response.set_cookie(
-    'auth_token',
-    user.auth_token,
-    httponly=True,   # La cookie no es accesible desde JavaScript
-    samesite='None', # Permite el uso en sitios cruzados
-    secure=False,    # Desactiva 'secure' para permitir HTTP
-    max_age=60 * 60 * 24 * 30 * 6  # 6 meses
-)
-
-    
-    # response.set_cookie(
-    # 'auth_token',
-    # user.auth_token,
-    # httponly=True,  # Solo accesible desde el backend
-    # secure=True,  # Requiere HTTPS
-    # samesite='None',  # Permite el uso cross-origin
-    # max_age=60 * 60 * 24 * 30 * 6  # 6 meses
-
-
-    return response
-
-
-@app.route('/check_link', methods=['GET'])
-def check_user_link():
-    """
-    Verifica si el usuario ya está vinculado a un refrigerador.
-    """
-    auth_token = request.cookies.get('auth_token')
-    if not auth_token:
-        return jsonify({"isLinked": False}), 200
-
-    # Busca el usuario por auth_token
-    user = User.query.filter_by(auth_token=auth_token).first()
-    if not user:
-        return jsonify({"isLinked": False}), 200
-
-    # Comprueba si el token coincide y está vinculado a al menos un refrigerador
-    if user.auth_token != auth_token or not user.fridges:
-        return jsonify({"isLinked": False}), 200
-
-    return jsonify({"isLinked": True}), 200
 
 
 def GetFridgeQr(fridge_code):

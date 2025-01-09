@@ -46,12 +46,23 @@ export const linkUserToFridge = async (code) => {
   }
 };
 
+export const getCookies = async ( ) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/getcookies`, {
+      withCredentials: true,
+    });
+    return response; // Devuelve la respuesta para manejarla en el frontend
+  } catch (error) {
+    console.error("Error in API call to getCookies:", error);
+    throw error; // Lanza el error para manejarlo en el frontend
+  }
+}
 export const checkUserLink = async () => {
   try {
       const response = await axios.get(`${API_BASE_URL}/check_link`, {
           withCredentials: true,
       });
-      return response.data.isLinked;
+      return response;
   } catch (error) {
       console.error("Error verifying user link:", error);
       throw error;

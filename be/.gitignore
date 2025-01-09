@@ -9,3 +9,5 @@ instance
 be/migrations/*
 migrations
 cypress*
+be/secret/*
+secret

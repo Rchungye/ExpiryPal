@@ -74,17 +74,17 @@ def actualizar_url_camara_task():
                     print(f"Error: uploaded_url is missing in the response for fridge {fridge.id}")
                     continue
 
-                print(f"Image from camera {camera.id} of fridge {fridge.id} successfully uploaded to cloudinary: {uploaded_url}")
+                # print(f"Image from camera {camera.id} of fridge {fridge.id} successfully uploaded to cloudinary: {uploaded_url}")
                 
                 if not uploaded_url:
                     print(f"New image URL not found for fridge {fridge.id}. Skipping.")
                     continue
-                print(f"New image URL: {uploaded_url}")
+                # print(f"New image URL: {uploaded_url}")
                 
                 items_in_fridge = Item.getItemsByFridgeId(fridge.id)
                 
                 if not items_in_fridge["payload"]:
-                    print(f"No items found in fridge {fridge.id}. Uploading found items")
+                    # print(f"No items found in fridge {fridge.id}. Uploading found items")
                     ml_payload = {
                         "fridge_id": fridge.id,
                         "camera_id": camera.id,
@@ -93,7 +93,7 @@ def actualizar_url_camara_task():
                     upload_cropped_items_if_first_time(ml_payload)
                     return
                 else:
-                    print(f"Items found in fridge {fridge.id}... \n {items_in_fridge}\n\n")
+                  #  print(f"Items found in fridge {fridge.id}... \n {items_in_fridge}\n\n")
                     # Enviar ambas imágenes al modelo ML
                     ml_payload = {
                         "last_img_url": uploaded_url,
@@ -130,7 +130,7 @@ def upload_cropped_items_if_first_time(payload):
     if last_picture_taken_from_fridge["status"] == "error":
         return {"status": 500, "message": "Error getting last picture URL from camera"}
     
-    print("payload sent to ML: ", payload)
+    # print("payload sent to ML: ", payload)
     try:
         response = requests.post(f"{ml_endpoint}ml/upload_items_if_first_time", json=payload)
         if response.status_code == 200:
