@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import NavBar from "./NavBar";
 import ItemModal from "./ItemModal";
 import { getItemsByFridgeId } from "../services/items";
@@ -9,6 +10,8 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 import { generateToken, messaging } from "../notifications/firebase";
+import { getCookies } from "../services/api"; // Adjust the import path as necessary
+import { checkUserLink, checkIfCMFToken } from "../services/api";
 import { onMessage } from "firebase/messaging";
 
 function Groceries() {
@@ -17,11 +20,16 @@ function Groceries() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [items, setItems] = useState([]);
+  const [isVerified, setIsVerified] =  useState(false);
+  const [cookies, setCookies] = useState([]);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const [notificationPreferences, setNotificationPreferences] = useState({
     expiration: 3,
     unusedItem: 7
   });
+  
+  const navigate = useNavigate();
+  
   const fridgeId = 1;
   const [sortOption, setSortOption] = useState("newest");
 
@@ -39,14 +47,70 @@ function Groceries() {
     p: 4,
     overflow: 'auto'
   };
+  useEffect(() => {
+    // Si ya está verificado, no hacer nada
+    if (isVerified) return;
+  
+    const fetchCookies = async () => {
+      console.log("Getting cookies...");
+      try {
+        const response = await getCookies();
+        console.log("Cookies:", response);
+        if (response['status'] === 200) {
+          setCookies(response);
+          setIsVerified(true);
+        } else {
+          setIsVerified(false);
+          setCookies([]);
+        }
+      } catch (error) {
+        console.error("Error getting cookies:", error);
+      }
+    };
+    const checkCMFToken = async () => {
+      try {
+        const response = await checkIfCMFToken();
+        console.log("isCMFToken:", response);
+        if (response.status === 200) {
+          console.log("isCMFToken:", response);
+          // Usuario autenticado y linkeado
+        } else {
+          // Usuario no autenticado, redirigir a welcome o login
+          generateToken();
+        }
+      } catch (error) {
+        console.error("Error verifying CMF token:", error);
+        navigate("/"); // Manejar casos de error redirigiendo a una página segura
+      }
+    }
+    const checkAuthToken = async () => {
+      try {
+        const response = await checkUserLink();
+        console.log("isLinked:", response);
+        if (response.status === 200) {
+          // Usuario autenticado y linkeado
+          setIsVerified(true); // Marcar como verificado
+        } else {
+          // Usuario no autenticado, redirigir a welcome o login
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Error verifying user link:", error);
+        navigate("/"); // Manejar casos de error redirigiendo a una página segura
+      }
+    };
+  
+    // Ejecutar ambas funciones de verificación
+    fetchCookies();
+    checkAuthToken();
+    checkCMFToken();
+  }, [isVerified, navigate]); // Dependencias: isVerified y navigate
+  
+  
+
 
   useEffect(() => {
-    generateToken();
-    onMessage(messaging, (payload) => {
-      console.log('Message received. ', payload);
-    })
-  }, []);
-  useEffect(() => {
+    
 
     const fetchItems = async () => {
       try {

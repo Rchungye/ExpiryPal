@@ -48,3 +48,17 @@ def get_user_by_fridge(fridge_id):
     Obtiene el usuario asociado a un refrigerador.
     """
     return User.query.filter_by(fridge_id=fridge_id).first()
+
+def getFCMtoken(data):
+    """
+    Obtiene el token FCM de un usuario.
+    """
+    print("\n\ndata in getFCM token: ", data)
+    decoded = User.decode_jwt(data.get('auth_token'))  
+    user_id = data.get('user_id')
+    print("user_id: ", user_id)
+    print("decoded: ", decoded)
+    FCM_token = User.query.filter_by(id=user_id).get('fcm_token')
+    if not FCM_token:
+        return jsonify({"error": f"FCM Token for user {user_id} not found"}), 404
+    return jsonify({"token": FCM_token}), 200 

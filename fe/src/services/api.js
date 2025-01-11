@@ -69,3 +69,14 @@ export const checkUserLink = async () => {
   }
 };
 
+export const checkIfCMFToken = async () => {
+  try {
+      const response = await axios.get(`${API_BASE_URL}/getfcm_token`, {
+          withCredentials: true,
+      });
+      return response;
+  } catch (error) {
+      console.error("Error verifying user link:", error);
+      throw error;
+  }
+}
