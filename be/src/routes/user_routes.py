@@ -12,25 +12,42 @@ firebase_admin.initialize_app(cred)
 import json
 from flask import jsonify, request
 from src.controllers import (
-    userController as User,
+    userController as UserController,
     notificationPreferencesController as NPC,
     ItemController as Item,
     FridgeController as Fridge
 )
+from src.models import ( 
+    user as UserClass
+)
+from src.middleware import (
+    secure as middelware
+)
+
+@app.route('/groceries', methods=['GET'])
+@middelware.require_auth
+def groceries():
+    return jsonify({"message": "Welcome to groceries"})
 
 
 @app.route("/user/all", methods=["GET"])
 def GetAllUsers():
-    result = User.GetAllUsers()
+    result = UserController.GetAllUsers()
     return result.jsonify()
 
 @app.route('/api/register-token', methods=['POST'])
 def register_token():
+    cookies = request.cookies
+    print("\n\nRequest cookies: ", cookies)
+    cookiescoded = UserClass.decode_jwt(cookies)
     data = request.get_json()
+    print("Data in user_routes.py > register_token", data)
+    print("Cookies in user_routes.py > getCookies(): ", cookies)
+
     auth_token = request.cookies.get('auth_token')
     print("data in user_routes.py > register_token", data)
     print("auth_token in user_routes.py > register_token", auth_token)
-    return User.saveCMFToken(data, auth_token)
+    return UserController.saveCMFToken(data, auth_token)
 
 @scheduler.task("interval", id="send_notifications", minutes=1)
 def send_notifications():
@@ -39,17 +56,21 @@ def send_notifications():
         today = datetime.datetime.now().date()
 
         fridges = Fridge.GetAllFridges()
+        print("fridges content", fridges)
         for fridge in fridges:
+            print(f"Processing fridge {fridge.id} for user {fridge.user_id}")
             preferences = NPC.GetNotificationPreferencesByFridgeId(fridge.id)
+            print(f"Preferences: {preferences}")
+            
             items = Item.getItemsByFridgeId(fridge.id)
-            user = User.get_user_by_fridge(fridge.id)
+            user = UserController.get_user_by_fridge(fridge.id)
 
             if not user or not user.fcm_token:
                 continue
 
             for item in items:
                 # Notificaciones de expiración
-                if Item.should_notify_expiration(item, today, preferences.expiration):
+                if Itemm.should_notify_expiration(item, today, preferences.expiration):
                     message = messaging.Message(
                         notification=messaging.Notification(
                             title="Item Expiration Alert",
@@ -73,3 +94,9 @@ def send_notifications():
 @app.route('/getcookies', methods=['GET'])
 def getcookies():
     return jsonify(request.cookies)
+
+
+@app.route("/getfcm_token", methods=['GET'])
+def getFCMtoken():
+    data = request.cookies
+    return UserController.getFCMtoken(data)

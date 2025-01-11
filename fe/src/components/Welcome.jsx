@@ -45,6 +45,7 @@ function Welcome() {
         const response = await checkUserLink();
         console.log("isLinked:", response);
         if (response.status === 200) {
+          
           navigate("/fridge/groceries");
         }
       } catch (error) {

@@ -28,7 +28,7 @@ export const generateToken= async () => {
 }
 export const sendTokenToServer = async (token) => {
     try {
-        const response = await fetch('/api/register-token', {
+        const response = await fetch('http://127.0.0.1:5000/api/register-token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
