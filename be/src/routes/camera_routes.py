@@ -36,7 +36,7 @@ def obtener_url_camara_route():
     resultado = HASS.obtener_url_camara(entity_id, base_url)
     return jsonify(resultado)
 
-@scheduler.task("interval", id="actualizar_url_camara", minutes=180)
+@scheduler.task("interval", id="actualizar_url_camara", minutes=3)
 def actualizar_url_camara_task():
     """
     Scheduled task to process cameras, upload images to Cloudinary, 
