@@ -48,7 +48,7 @@ def add_items(payload):
                 name=name,
                 imageURL=image_url,
                 fridge_id=fridge_id,
-                expirationDate = (datetime.now(timezone.utc) + timedelta(days=5))
+                expirationDate = "",
             )
             print(f"Adding item: {new_item}")
             db.session.add(new_item)

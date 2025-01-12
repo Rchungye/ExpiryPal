@@ -56,7 +56,7 @@ def register_token():
 
     return result
 
-@scheduler.task("interval", id="send_notifications", minutes=2)
+@scheduler.task("interval", id="send_notifications", minutes=0.2)
 def send_notifications():
     print("\n\nChecking if notifications should be sent...")
     with app.app_context():  # Necesario para acceder al contexto de Flask
@@ -94,8 +94,10 @@ def send_notifications():
 
                 added_date = item.get("addedDate")
                 expiration_date = item.get("expirationDate")
+                
                 item_name = item.get("name")
                 item_id = item.get("id")
+
 
                 print(f"\nAdded date: {added_date}")
                 print(f"Today: {today}")
@@ -108,7 +110,12 @@ def send_notifications():
                 for user in users: 
                     print(f"Processing user_id {user.id} username: {user.username}")
                     # Notificaciones de expiración
-                    if Item.should_notify_expiration(expiration_date, today, expiration_date_user_preference):
+                    print(f"Expiration date: {expiration_date}, ")
+                    if (expiration_date == "0000-00-00"):
+                        print(f"Item {item_id} has no expiration date. {expiration_date} Skipping expiration notification.")
+                    else:
+                        print(f"Item {item_id} has expiration date. {expiration_date} Checking if notification should be sent.")
+                        Item.should_notify_expiration(expiration_date, today, expiration_date_user_preference)
                         message = messaging.Message(
                             notification=messaging.Notification(
                                 title="Item Expiration Alert",

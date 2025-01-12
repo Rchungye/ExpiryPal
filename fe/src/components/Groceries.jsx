@@ -16,7 +16,7 @@ import { onMessage } from "firebase/messaging";
 
 function Groceries() {
   
-  const [navBarOpen, setNavBarOpen] = useState(false);
+  const [navBarOpen, setNavBarOpen] = useState(false); //Tracks navbar visibility
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [items, setItems] = useState([]);
@@ -33,6 +33,7 @@ function Groceries() {
   
   const fridgeId = 1;
   const [sortOption, setSortOption] = useState("newest");
+  const [searchQuery, setSearchQuery] = useState(""); //State for search query
 
   const modalStyle = {
     position: 'absolute',
@@ -127,50 +128,10 @@ function Groceries() {
   
   
 
-
-  useEffect(() => {
-    
-
-    const fetchItems = async () => {
-      try {
-        const response = await getItemsByFridgeId(fridgeId);
-        console.log(response);
-        const transformedItems = response.data.payload.map((item) => ({
-          id: item.id,
-          name: item.name || `Item ${item.id}`,
-          image: item.imageURL || "/items/default.png",
-          dateExp: formatDateToDDMMYY(item.expirationDate),
-          dateAdded: formatDateToDDMMYY(item.addedDate),
-        }));
-        setItems(transformedItems);
-      } catch (error) {
-        console.error("Failed to fetch items:", error);
-      }
-    };
-
-    const fetchNotificationPreferences = async () => {
-      try {
-        const response = await getNotificationPreferences(fridgeId);
-        if (response && response.data) {
-          setNotificationPreferences({
-            expiration: response.data.expiration,
-            unusedItem: response.data.unusedItem
-          });
-        }
-      } catch (error) {
-        console.error("Failed to fetch notification preferences:", error);
-      }
-    };
-
-    console.log(fetchNotificationPreferences());
-    fetchItems();
-  }, [fridgeId]);
-
   useEffect(() => {
     const fetchItems = async () => {
       try {
         const response = await getItemsByFridgeId(fridgeId);
-        console.log(response);
         const transformedItems = response.data.payload.map((item) => ({
           id: item.id,
           name: item.name || `Item ${item.id}`,
@@ -187,8 +148,8 @@ function Groceries() {
     const fetchNotificationPreferences = async () => {
       try {
         const response = await getNotificationPreferences(fridgeId);
-        console.log("response", response);
-        if (response) {
+        console.log("response in fetchNotificationsPreferences", response);
+        if (response.status === 200) {
           if (response.expiration && response.unusedItem) {
             setNotificationPreferences({
               expiration: response.expiration,
@@ -227,6 +188,7 @@ function Groceries() {
   const toggleNavBar = () => {
     setNavBarOpen((prev) => !prev);
   };
+
   const sortItems = (items, option) => {
     const sortedItems = [...items];
     switch (option) {
@@ -251,14 +213,26 @@ function Groceries() {
         return sortedItems;
     }
   };
-  const handleSortChange = (e) => {
-    setSortOption(e.target.value);
-  };
+
   const formatToISO = (ddmmyy) => {
     if (!ddmmyy) return null;
     const [day, month, year] = ddmmyy.split("/");
     return `20${year}-${month}-${day}`;
   };
+
+  const handleSortChange = (e) => {
+    setSortOption(e.target.value);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value.toLowerCase());
+  };
+
+  //Filter and sort items
+  const filteredAndSortedItems = sortItems(
+    items.filter((item) => item.name.toLowerCase().includes(searchQuery)),
+    sortOption
+  );
 
   //Sets the selected item and opens the modal
   const handleItemClick = (item) => {
@@ -280,11 +254,8 @@ function Groceries() {
     
   };
 
-  //Function to calculate days left
   const calculateDaysLeft = (expDate) => {
-    if (!expDate) {
-      return null;
-    }
+    if (!expDate) return null;
     const [day, month, year] = expDate.split("/").map(Number);
     const expiration = new Date(2000 + year, month - 1, day);
     const today = new Date();
@@ -293,16 +264,11 @@ function Groceries() {
     today.setHours(0, 0, 0, 0);
 
     const diffTime = expiration - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  //Function to check if the item was added today
   const isItemNew = (dateAdded) => {
-    if (!dateAdded) {
-      return false;
-    }
+    if (!dateAdded) return false;
     const [day, month, year] = dateAdded.split("/").map(Number);
     const addedDate = new Date(2000 + year, month - 1, day);
     const today = new Date();
@@ -313,11 +279,8 @@ function Groceries() {
     return addedDate.getTime() === today.getTime();
   };
 
-  //Function to calculate days since the item was added
   const calculateDaysSinceAdded = (dateAdded) => {
-    if (!dateAdded) {
-      return null;
-    }
+    if (!dateAdded) return null;
     const [day, month, year] = dateAdded.split("/").map(Number);
     const addedDate = new Date(2000 + year, month - 1, day);
     const today = new Date();
@@ -326,12 +289,9 @@ function Groceries() {
     today.setHours(0, 0, 0, 0);
 
     const diffTime = today - addedDate;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  //Function to transform backend GMT date to DD/MM/YY
   const formatDateToDDMMYY = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -340,7 +300,7 @@ function Groceries() {
     const year = String(date.getUTCFullYear()).slice(-2);
     return `${day}/${month}/${year}`;
   };
-  const sortedItems = sortItems(items, sortOption);
+
 
   const getNotificationItems = () => {
     return items.filter(item => {
@@ -448,75 +408,84 @@ function Groceries() {
       </Modal>
 
       <div className="max-w-[1024px] mx-auto p-4">
-        {/* Dropdown */}
-        <div className="flex items-center px-4 py-2 bg-gray-100">
-          <label
-            htmlFor="sort"
-            className="text-lg font-bold text-gray-700 mr-2"
-          >
-            Sort by:
-          </label>
-          <select
-            id="sort"
-            className="border rounded px-3 py-2 bg-white shadow-sm focus:outline-none"
-            value={sortOption}
-            onChange={handleSortChange}
-          >
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
-            <option value="expiry-soon">Expiring Soon</option>
-          </select>
+        {/*Dropdown and Search Bar*/}
+        <div className="flex items-end px-4 py-2 bg-gray-100 space-x-4">
+          <div className="flex flex-col">
+            <label
+              htmlFor="sort"
+              className="text-lg font-bold text-gray-700 mb-1"
+            >
+              Sort by:
+            </label>
+            <select
+              id="sort"
+              className="border rounded px-3 py-2 bg-white shadow-sm focus:outline-none"
+              value={sortOption}
+              onChange={handleSortChange}
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="expiry-soon">Expiring Soon</option>
+            </select>
+          </div>
+
+          {/*Search Bar*/}
+          <div className="flex-grow max-w-[300px]">
+            <input
+              type="text"
+              placeholder="Search items..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="border rounded px-3 py-2 bg-white shadow-sm focus:outline-none w-full"
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
-          {sortedItems.map((item) => {
+        <div
+          className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4"
+          style={{ minHeight: "300px" }}
+        >
+          {filteredAndSortedItems.map((item) => {
             //Calculate daysLeft and expired dynamically
             const daysLeft = calculateDaysLeft(item.dateExp);
-            let expired = daysLeft !== null ? daysLeft < 0 : false;
-            //Calculate isNew
-            const isNew = isItemNew(item.dateAdded);
-            //Determine warning
+            const expired = daysLeft !== null ? daysLeft < 0 : false;
+
+            //Determine warnings
             let warning = "";
             if (expired) {
               warning = "red";
             } else if (daysLeft !== null && daysLeft >= 0 && daysLeft <= 2) {
               warning = "orange";
             }
+            const isNew = isItemNew(item.dateAdded);
             const daysSinceAdded = calculateDaysSinceAdded(item.dateAdded);
-
-            //To dermine if blue warning should be
             const blueWarning = daysSinceAdded !== null && daysSinceAdded > 5;
 
             return (
               <div
                 key={item.id}
                 onClick={() => handleItemClick(item)}
-                className={`bg-white rounded-lg shadow p-4 relative text-center ${expired
+                className={`bg-white rounded-lg shadow p-4 relative text-center cursor-pointer max-w-52 item h-[210px] ${expired
                   ? "border border-red-400"
                   : warning === "orange"
                     ? "border border-orange-400"
                     : blueWarning
-                      ? "border border-blue-400"
-                      : ""
-                  } cursor-pointer max-w-52 item`}
+                    ? "border border-blue-400"
+                    : ""
+                }`}
               >
                 {isNew && (
                   <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
                     NEW
                   </div>
                 )}
-
-                {/* Warning Badges */}
                 {warning === "red" && (
                   <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
                     !
                   </div>
                 )}
                 {warning === "orange" && !expired && (
-                  <div
-                    className="absolute top-2 right-2
-                     bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded"
-                  >
+                  <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">
                     !
                   </div>
                 )}
@@ -532,18 +501,15 @@ function Groceries() {
                     !
                   </div>
                 )}
-
                 <img
                   src={item.image}
                   alt={item.name}
                   className="w-full h-24 object-contain rounded mb-3"
                 />
                 <p className="font-semibold">{item.name}</p>
-
                 <span className="text-gray-500 text-sm block">
                   {item.dateExp ? item.dateExp : "Expiration N/A"}
                 </span>
-
                 <span
                   className={`text-sm font-semibold ${expired
                     ? "text-red-600"
@@ -564,7 +530,7 @@ function Groceries() {
         </div>
       </div>
 
-      {/* Sliding NavBar */}
+      {/*Sliding NavBar*/}
       <div
         className={`fixed top-0 right-0 h-full w-full bg-white transform transition-transform duration-300 ease-in-out ${navBarOpen ? "translate-x-0" : "translate-x-full"
           }`}
@@ -572,7 +538,7 @@ function Groceries() {
         <NavBar onBackToItems={toggleNavBar} />
       </div>
 
-      {/* Item Modal */}
+      {/*Item Modal*/}
       {modalOpen && (
         <ItemModal
           item={selectedItem}
