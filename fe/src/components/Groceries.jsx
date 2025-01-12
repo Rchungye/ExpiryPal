@@ -80,7 +80,7 @@ function Groceries() {
         }
       } catch (error) {
         console.error("Error verifying CMF token:", error);
-        navigate("/"); // Manejar casos de error redirigiendo a una página segura
+       // navigate("/"); // Manejar casos de error redirigiendo a una página segura
       }
     }
     const checkAuthToken = async () => {
@@ -93,9 +93,11 @@ function Groceries() {
         } else {
           // Usuario no autenticado, redirigir a welcome o login
           navigate("/");
+          setIsVerified(false);
         }
       } catch (error) {
         console.error("Error verifying user link:", error);
+        setIsVerified(false);
         navigate("/"); // Manejar casos de error redirigiendo a una página segura
       }
     };
