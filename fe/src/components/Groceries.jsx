@@ -10,7 +10,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 import { generateToken, messaging } from "../notifications/firebase";
-import { getCookies } from "../services/api"; // Adjust the import path as necessary
+import { getCookies, saveNotificationPreferences } from "../services/api"; // Adjust the import path as necessary
 import { checkUserLink, checkIfCMFToken } from "../services/api";
 import { onMessage } from "firebase/messaging";
 
@@ -23,6 +23,7 @@ function Groceries() {
   const [isVerified, setIsVerified] =  useState(false);
   const [cookies, setCookies] = useState([]);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+
   const [notificationPreferences, setNotificationPreferences] = useState({
     expiration: 3,
     unusedItem: 7
@@ -161,15 +162,16 @@ function Groceries() {
       }
     };
 
+    console.log(fetchNotificationPreferences());
     fetchItems();
-    fetchNotificationPreferences();
   }, [fridgeId]);
 
   useEffect(() => {
     const fetchItems = async () => {
       try {
         const response = await getItemsByFridgeId(fridgeId);
-        const transformedItems = response.data.map((item) => ({
+        console.log(response);
+        const transformedItems = response.data.payload.map((item) => ({
           id: item.id,
           name: item.name || `Item ${item.id}`,
           image: item.imageURL || "/items/default.png",
@@ -181,24 +183,46 @@ function Groceries() {
         console.error("Failed to fetch items:", error);
       }
     };
-
+  
     const fetchNotificationPreferences = async () => {
       try {
         const response = await getNotificationPreferences(fridgeId);
-        if (response && response.data) {
+        console.log("response", response);
+        if (response) {
+          if (response.expiration && response.unusedItem) {
+            setNotificationPreferences({
+              expiration: response.expiration,
+              unusedItem: response.unusedItem,
+            });
+          } 
+        } else {
+          // Si no hay respuesta o datos, asigna los valores predeterminados
+          const response = await saveNotificationPreferences({
+            fridge_id : fridgeId,
+            expiration: 3,
+            unusedItem: 7
+          })
           setNotificationPreferences({
-            expiration: response.data.expiration,
-            unusedItem: response.data.unusedItem
-          });
+            expiration: 3,
+            unusedItem: 7
+          })
+          console.log("Notification preferences saved:", response);
         }
       } catch (error) {
         console.error("Failed to fetch notification preferences:", error);
+        // En caso de error, también puedes establecer los valores predeterminados
+        setNotificationPreferences({
+          expiration: 3,
+          unusedItem: 7
+        });
       }
     };
-
-    fetchItems();
+  
+    // Llamar a la función para obtener las preferencias de notificación
     fetchNotificationPreferences();
+    fetchItems();
   }, [fridgeId]);
+  
 
   const toggleNavBar = () => {
     setNavBarOpen((prev) => !prev);

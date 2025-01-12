@@ -19,11 +19,11 @@ const NavBar = ({ onBackToItems }) => {
     const fetchPreferences = async () => {
       try {
         const response = await getNotificationPreferences(fridgeId);
-        const preferences = response.data;
-
-        if (preferences) {
-          setExpirationDays(preferences.expiration || 3);
-          setUnusedDays(preferences.unusedItem || 7);
+        console.log("fridgeId in NavBar:", fridgeId);
+        console.log("Notification preferences:", response);
+        if (response) {
+          setExpirationDays(response.expiration || 3);
+          setUnusedDays(response.unusedItem || 7);
         } else {
           console.log("No preferences found for this fridge.");
         }

@@ -34,7 +34,7 @@ def save_preferences(data):
     Saves or updates notification preferences for a fridge.
     """
     schema = NotificationPreferencesSchema()
-
+    print("Data: ", data)
     # Validate the data
     errors = schema.validate(data)
     if errors:
