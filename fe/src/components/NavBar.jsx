@@ -13,7 +13,7 @@ const NavBar = ({ onBackToItems }) => {
   const fridgeId = 1; //PLACEHOLDER FRIDGE
 
   useEffect(() => {
-    // etch current notification preferences from the backend
+    //Fetch current notification preferences from the backend
     const fetchPreferences = async () => {
       try {
         const response = await getNotificationPreferences(fridgeId);
@@ -52,19 +52,20 @@ const NavBar = ({ onBackToItems }) => {
       });
     }
   };
-
   return (
     <div className="bg-gray-100 min-h-screen font-roboto sliding-menu">
       {/* Header */}
-      <header className="bg-blue-main text-white flex justify-between items-center p-4 relative">
-        <h1 className="text-3xl mx-auto">MENU</h1>
-        <button onClick={onBackToItems} className="absolute right-4 text-6xl">
-          ×
-        </button>
+      <header className="bg-blue-main  p-4  ">
+        <div className="max-w-[1024px] mx-auto text-white flex justify-between items-center relative">
+          <h1 className="text-3xl mx-auto">MENU</h1>
+          <button onClick={onBackToItems} className="absolute right-4 text-6xl">
+            ×
+          </button>
+        </div>
       </header>
 
       {/* Notification Settings */}
-      <div className="p-4 text-center">
+      <div className="p-4 text-center max-w-[600px] mx-auto">
         <h2 className="text-xl font-bold text-blue-main mb-2">
           Notification Settings
         </h2>
@@ -78,7 +79,7 @@ const NavBar = ({ onBackToItems }) => {
       </div>
 
       {/* Expiration Notification */}
-      <div className="bg-white p-4 mt-4 shadow ml-4 mr-4 rounded">
+      <div className="bg-white p-4 mt-4 shadow mx-auto rounded max-w-[600px]">
         <h3 className="font-bold text-lg text-gray-800">Expiration:</h3>
         <p className="text-sm text-gray-700">
           Notify me
@@ -93,7 +94,7 @@ const NavBar = ({ onBackToItems }) => {
       </div>
 
       {/* Unused Item Notification */}
-      <div className="bg-white p-4 mt-4 shadow ml-4 mr-4 rounded">
+      <div className="bg-white p-4 mt-4 shadow mx-auto rounded max-w-[600px]">
         <h3 className="font-bold text-lg text-gray-800">Unused item:</h3>
         <p className="text-sm text-gray-700">
           Notify me if the item has not been used in
