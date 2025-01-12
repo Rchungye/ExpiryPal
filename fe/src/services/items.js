@@ -9,6 +9,12 @@ export const getItemsByFridgeId = async (fridgeId) => {
    
 };
 
+export const deleteItemById = async (itemId) => {
+  return ApiService.delete(`/items/${itemId}`)
+    .then((response) => response)
+    .catch((response) => Promise.resolve(response.response));
+}
+
 export const updateItemName = async (itemId, userId, newName) => {
   return ApiService.put(`/items/${itemId}/updateName`, {
     user_id: userId,

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "./NavBar";
 import ItemModal from "./ItemModal";
-import { getItemsByFridgeId } from "../services/items";
+import { getItemsByFridgeId, deleteItemById } from "../services/items";
 import { getNotificationPreferences } from "../services/notificationService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
@@ -71,18 +71,34 @@ function Groceries() {
       try {
         const response = await checkIfCMFToken();
         console.log("isCMFToken:", response);
+    
         if (response.status === 200) {
-          console.log("isCMFToken:", response);
+          console.log("CMF Token exists:", response.data);
           // Usuario autenticado y linkeado
-        } else {
-          // Usuario no autenticado, redirigir a welcome o login
-          generateToken();
         }
       } catch (error) {
-        console.error("Error verifying CMF token:", error);
-       // navigate("/"); // Manejar casos de error redirigiendo a una página segura
+        // Axios atrapa los errores aquí para códigos no 2xx
+        if (error.response) {
+          // Manejar errores del servidor
+          if (error.response.status === 404) {
+            console.log("CMF Token not found, generating a new one...");
+            generateToken();
+          } else {
+            console.error(
+              "Unhandled error from the server:",
+              error.response.data
+            );
+          }
+        } else if (error.request) {
+          // No hubo respuesta del servidor
+          console.error("No response received from the server:", error.request);
+        } else {
+          // Error en la configuración de la solicitud
+          console.error("Error in setting up the request:", error.message);
+        }
       }
-    }
+    };
+    
     const checkAuthToken = async () => {
       try {
         const response = await checkUserLink();
@@ -236,6 +252,8 @@ function Groceries() {
   //Handle item removal
   const handleRemoveItem = (itemId) => {
     setItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
+    deleteItemById(itemId);
+    
   };
 
   //Function to calculate days left

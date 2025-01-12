@@ -11,5 +11,5 @@ class FridgeLog(db.Model):
     action = db.Column(db.String(255), nullable=False)  # e.g. "Changed expiration date"
     details = db.Column(db.Text, nullable=True)  #  e.g. "From '2021-12-31' to '2022-12-31'"
 
-    item = db.relationship('Item', backref='logs')
+    item = db.relationship('Item', backref='logs', cascade='all, delete')
     user = db.relationship('User', backref='item_logs')

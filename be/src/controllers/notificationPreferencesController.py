@@ -18,6 +18,7 @@ def GetNotificationPreferencesByFridgeId(fridge_id):
     Returns:
         ControllerObject: Contains the notification preferences data and status code.
     """
+   
     preferences = np.query.filter_by(fridge_id=fridge_id).first()
     if preferences is None:
         return ControllerObject(

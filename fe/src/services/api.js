@@ -71,12 +71,36 @@ export const checkUserLink = async () => {
 
 export const checkIfCMFToken = async () => {
   try {
-      const response = await axios.get(`${API_BASE_URL}/getfcm_token`, {
+    console.log("Checking if CMF token exists...");
+      const response = await axios.get(`${API_BASE_URL}/checkIfCMFToken`, {
           withCredentials: true,
       });
+      console.log("CMF token exists:", response.data);
       return response;
   } catch (error) {
       console.error("Error verifying user link:", error);
       throw error;
   }
 }
+
+export const sendTokenToServer = async (token) => {
+  try {
+      const response = await fetch(`${API_BASE_URL}/api/register-token`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
+          credentials: 'include', // Incluye las cookies en la solicitud
+      });
+
+      if (response.ok) {
+        console.log('Token sent to server successfully.');
+        console.log(response)
+      } else {
+          console.error('Failed to send token to server. Response status:', response.status);
+      }
+  } catch (error) {
+      console.error('Error sending token to server:', error);
+  }
+};

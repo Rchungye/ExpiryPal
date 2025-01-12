@@ -115,14 +115,14 @@ def updateItemExpirationDate(item_id, user_id, new_expiration_date):
 
     return {"message": "Item expiration date updated successfully"}, 200
 
-def should_notify_expiration(item, today, days_before_expiration):
+def should_notify_expiration(expirationDate, today, days_before_expiration):
     """
     Verifies if an item is about to expire.
     """
-    return item.expirationDate and (item.expirationDate - today).days <= days_before_expiration
+    return expirationDate and (expirationDate - today).days <= days_before_expiration
 
-def should_notify_unused(item, today, unused_days):
+def should_notify_unused(addedDate, today, unused_days):
     """
     Verifies if an item has been unused for a certain amount of days.
     """
-    return item.addedDate and (today - item.addedDate).days >= unused_days
+    return addedDate and (today - addedDate).days >= unused_days

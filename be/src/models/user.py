@@ -13,8 +13,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False)
     fridges = db.relationship('Fridge', secondary=fridge_user, back_populates='users')
-    auth_token = db.Column(db.String(255), unique=True, nullable=True)
-    fcm_token = db.Column(db.String(255), nullable=True)
+    auth_token = db.Column(db.Text, unique=True, nullable=True)
+    fcm_token = db.Column(db.Text, nullable=True)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -48,6 +48,3 @@ class User(db.Model):
             print("Invalid token")
             return None
 
-    def save_fcm_token(self, token):
-        self.fcm_token = token
-        db.session.commit()

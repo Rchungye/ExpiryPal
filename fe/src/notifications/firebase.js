@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 
 import { getMessaging, getToken } from "firebase/messaging";
+import { sendTokenToServer } from "../services/api";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMyQXDBjaslet1niB2Ykbw8lNJuu6pSdg",
@@ -18,6 +19,8 @@ const app = initializeApp(firebaseConfig);
 export const messaging = getMessaging(app);
 
 export const generateToken= async () => {
+    console.log("Requesting permission...");
+    console.log("in generateToken");
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
         const token = await getToken(messaging, {
@@ -26,23 +29,3 @@ export const generateToken= async () => {
         sendTokenToServer(token);
     }
 }
-export const sendTokenToServer = async (token) => {
-    try {
-        const response = await fetch('http://127.0.0.1:5000/api/register-token', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ token }),
-            credentials: 'include', // Incluye las cookies en la solicitud
-        });
-
-        if (response.ok) {
-            console.log('Token sent to server successfully.');
-        } else {
-            console.error('Failed to send token to server. Response status:', response.status);
-        }
-    } catch (error) {
-        console.error('Error sending token to server:', error);
-    }
-};
