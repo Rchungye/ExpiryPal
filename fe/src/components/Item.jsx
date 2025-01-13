@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import itemsData from "../assets/jsons/items.json";
 
@@ -18,6 +18,7 @@ function Item() {
   };
 
   const handleRemove = () => {
+    console.log("Item removed:", item.id);
     alert("Item removed!");
     navigate("/fridge/groceries");
   };

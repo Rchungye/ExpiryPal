@@ -107,10 +107,21 @@ def link_user_to_fridge(fridge_code):
 
 def GetAllFridges():
     fridges = Fridge.query.all()
-    return ControllerObject(
-        payload=[fridge.as_dict() for fridge in fridges],
-        status=200
-    )
+    return fridges
+
+
+def get_user_by_fridge(fridge_id):
+    """
+    Obtiene los usuarios asociados a un refrigerador (por su fridge_id).
+    """
+    # Buscar el refrigerador por su id
+    fridge = Fridge.query.get(fridge_id)
+    
+    if fridge:
+        # Devuelve la lista de usuarios asociados a este refrigerador
+        return fridge.users  # Esto devuelve la lista de objetos 'User'
+    else:
+        return None  # Si no se encuentra el refrigerador
 
 @staticmethod
 def GetCamerasByFridgeId(fridge_id):

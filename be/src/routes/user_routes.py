@@ -17,9 +17,10 @@ from src.controllers import (
     ItemController as Item,
     FridgeController as Fridge
 )
-from src.models import ( 
-    user as UserClass
+from src.models.user import (
+    User as UserClass
 )
+
 from src.middleware import (
     secure as middelware
 )
@@ -35,68 +36,115 @@ def GetAllUsers():
     result = UserController.GetAllUsers()
     return result.jsonify()
 
+
 @app.route('/api/register-token', methods=['POST'])
 def register_token():
     cookies = request.cookies
-    print("\n\nRequest cookies: ", cookies)
-    cookiescoded = UserClass.decode_jwt(cookies)
+    print("\n\nRequest cookies in register-token: ", cookies)
+
     data = request.get_json()
-    print("Data in user_routes.py > register_token", data)
-    print("Cookies in user_routes.py > getCookies(): ", cookies)
+    print("Data received in register_rotoken : ", data)
 
-    auth_token = request.cookies.get('auth_token')
-    print("data in user_routes.py > register_token", data)
-    print("auth_token in user_routes.py > register_token", auth_token)
-    return UserController.saveCMFToken(data, auth_token)
+    result =  UserController.saveCMFToken(data, cookies)
+     # Accede al cuerpo de la respuesta
+    if isinstance(result, tuple):
+        response_body = result[0].get_data(as_text=True)  # Obtiene el cuerpo de la respuesta como texto
+    else:
+        response_body = result.get_data(as_text=True)
 
-@scheduler.task("interval", id="send_notifications", minutes=1)
+    print("Result body: ", response_body)  # Muestra el cuerpo de la respuesta
+
+    return result
+
+@scheduler.task("interval", id="send_notifications", minutes=0.2)
 def send_notifications():
-    print("\n\nSending notifications")
+    print("\n\nChecking if notifications should be sent...")
     with app.app_context():  # Necesario para acceder al contexto de Flask
         today = datetime.datetime.now().date()
 
         fridges = Fridge.GetAllFridges()
-        print("fridges content", fridges)
-        for fridge in fridges:
-            print(f"Processing fridge {fridge.id} for user {fridge.user_id}")
-            preferences = NPC.GetNotificationPreferencesByFridgeId(fridge.id)
-            print(f"Preferences: {preferences}")
-            
-            items = Item.getItemsByFridgeId(fridge.id)
-            user = UserController.get_user_by_fridge(fridge.id)
 
-            if not user or not user.fcm_token:
-                continue
+
+        for fridge in fridges:
+            print(f"Processing fridge {fridge.id}")
+            response, status_code = NPC.GetNotificationPreferencesByFridgeId(fridge.id).jsonify()
+
+            # Imprimir el código de estado
+            print(f"HTTP Status Code: {status_code}")
+
+            # Acceder al contenido de la respuesta
+            preferences = response.get_json()  # Parsear el contenido JSON
+
+            # Imprimir el contenido de las preferencias
+            print(f"Preferences: {preferences}")
+            expiration_date_user_preference = preferences["expiration"]
+            unused_item_user_preference = preferences["unusedItem"]
+            
+            items_response = Item.getItemsByFridgeId(fridge.id)
+            
+            items = items_response.get('payload', [])
+            
+            users = Fridge.get_user_by_fridge(fridge.id)
+            print(f"Users: {users}")
+            if not users:
+                print(f"No users found for fridge {fridge.id}, skipping notifications.")
+                continue  # Si no hay usuarios, continuar con el siguiente refrigerador
 
             for item in items:
-                # Notificaciones de expiración
-                if Itemm.should_notify_expiration(item, today, preferences.expiration):
-                    message = messaging.Message(
-                        notification=messaging.Notification(
-                            title="Item Expiration Alert",
-                            body=f"The item '{item.name}' will expire soon."
-                        ),
-                        token=user.fcm_token,
-                    )
-                    messaging.send(message)
 
-                # Notificaciones de ítems no usados
-                if Item.should_notify_unused(item, today, preferences.unusedItem):
-                    message = messaging.Message(
-                        notification=messaging.Notification(
-                            title="Unused Item Alert",
-                            body=f"The item '{item.name}' has not been used for a while."
-                        ),
-                        token=user.fcm_token,
-                    )
-                    messaging.send(message)
+                added_date = item.get("addedDate")
+                expiration_date = item.get("expirationDate")
+                
+                item_name = item.get("name")
+                item_id = item.get("id")
+
+
+                print(f"\nAdded date: {added_date}")
+                print(f"Today: {today}")
+                print(f"unused_item_user_preference: {unused_item_user_preference}")
+                print(f"\nexpiration date: {expiration_date}")
+                print(f"expiration_date_user_preference: {expiration_date_user_preference}")
+                print(f"today: {today}")
+                print(f"Item name: {item_name}")
+
+                for user in users: 
+                    print(f"Processing user_id {user.id} username: {user.username}")
+                    # Notificaciones de expiración
+                    print(f"Expiration date: {expiration_date}, ")
+                    if (expiration_date == "0000-00-00"):
+                        print(f"Item {item_id} has no expiration date. {expiration_date} Skipping expiration notification.")
+                    else:
+                        print(f"Item {item_id} has expiration date. {expiration_date} Checking if notification should be sent.")
+                        Item.should_notify_expiration(expiration_date, today, expiration_date_user_preference)
+                        message = messaging.Message(
+                            notification=messaging.Notification(
+                                title="Item Expiration Alert",
+                                body=f"The item '{item_name}' will expire soon."
+                            ),
+                            token=user.fcm_token,
+                        )
+                        
+                        print(f"EXP NOT: Sending notification to user {user.id} for item {item_id}")
+                        messaging.send(message)
+
+                    # Notificaciones de ítems no usados
+                    if Item.should_notify_unused(added_date, today, unused_item_user_preference):
+                        message = messaging.Message(
+                            notification=messaging.Notification(
+                                title="Unused Item Alert",
+                                body=f"The item '{item.get("name")}' has not been used for a while."
+                            ),
+                            token=user.fcm_token,
+                        )
+                        print(f"UNUSED NOT: Sending notification to user {user.id} for item {item.get("id")}")
+                        messaging.send(message)
 
 @app.route('/getcookies', methods=['GET'])
 def getcookies():
     return jsonify(request.cookies)
 
 
-@app.route("/getfcm_token", methods=['GET'])
-def getFCMtoken():
+@app.route("/checkIfCMFToken", methods=['GET'])
+def checkIfCMFToken():
     data = request.cookies
-    return UserController.getFCMtoken(data)
+    return UserController.checkIfCMFToken(data)

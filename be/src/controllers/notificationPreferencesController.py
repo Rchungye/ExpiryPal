@@ -18,6 +18,7 @@ def GetNotificationPreferencesByFridgeId(fridge_id):
     Returns:
         ControllerObject: Contains the notification preferences data and status code.
     """
+   
     preferences = np.query.filter_by(fridge_id=fridge_id).first()
     if preferences is None:
         return ControllerObject(
@@ -33,7 +34,7 @@ def save_preferences(data):
     Saves or updates notification preferences for a fridge.
     """
     schema = NotificationPreferencesSchema()
-
+    print("Data: ", data)
     # Validate the data
     errors = schema.validate(data)
     if errors:

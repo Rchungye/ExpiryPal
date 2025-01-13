@@ -18,47 +18,65 @@ def GetAllUsers():
             status=500
         )
     
-def saveCMFToken(data, auth_token):
-    print("\n\nData: ", data)
-    
-    # Accede al token desde el diccionario usando la clave
-    token = data.get('token')  # Usa .get() para evitar errores si la clave no existe
-    print("\n\nAuth Token: ", auth_token)
-    if not token:
+def saveCMFToken(data, cookies):
+    try:
+        user_cookies = User.decode_jwt(cookies.get('auth_token'))
+        print("Decoded JWT: ", user_cookies)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 401
+
+    if not user_cookies:
+        return jsonify({"error": "No auth token provided"}), 400
+
+    fcm_token = data.get('token')
+    if not fcm_token:
         return jsonify({"error": "Token not provided"}), 400
-    
-    data_payload = User.decode_jwt(token)
-    print("\n\nData payload: ", data_payload)
-    
-    user_id = data_payload.get('user_id') if data_payload else None
+
+    user_id = user_cookies.get('user_id')
     if not user_id:
-        return jsonify({"error": "Invalid or expired token"}), 400
-    
+        return jsonify({"error": "Invalid user_id in saveCMFToken"}), 400
+
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
-    
-    # Guarda el token FCM en la base de datos
-    user.save_fcm_token(token)
-    return jsonify({"message": "Token saved successfully"}), 200
+
+    print(f"User found: {user.as_dict()}")
+    print(f"Attempting to save fcm_token: {fcm_token}")
+
+    try:
+        user.fcm_token = fcm_token
+        db.session.commit()
+        db.session.refresh(user)  # Refresca el estado del usuario
+        print(f"CMF token successfully saved for user {user_id}: {user.cmf_token}")
+        return jsonify({"message": "Token saved successfully"}), 200
+    except Exception as e:
+        print("Error saving CMF token:", e)
+        db.session.rollback()
+        return jsonify({"error": "Failed to save token"}), 500
 
 
-def get_user_by_fridge(fridge_id):
-    """
-    Obtiene el usuario asociado a un refrigerador.
-    """
-    return User.query.filter_by(fridge_id=fridge_id).first()
 
-def getFCMtoken(data):
+def checkIfCMFToken(data):
     """
-    Obtiene el token FCM de un usuario.
-    """
-    print("\n\ndata in getFCM token: ", data)
-    decoded = User.decode_jwt(data.get('auth_token'))  
-    user_id = data.get('user_id')
-    print("user_id: ", user_id)
+    Check if the current user has a FCM token saved.
+    """    
+    # Decodificar el auth_token
+    decoded = User.decode_jwt(data.get('auth_token'))
     print("decoded: ", decoded)
-    FCM_token = User.query.filter_by(id=user_id).get('fcm_token')
+    
+    # Obtener user_id del token decodificado
+    user_id = decoded.get('user_id')
+    print("user_id: ", user_id)
+
+    # Buscar el usuario en la base de datos
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        print("User not found")
+        return jsonify({"error": f"User with id {user_id} not found"}), 404
+
+    FCM_token = user.fcm_token
     if not FCM_token:
+        print("FCM Token not found for user ", user_id)
         return jsonify({"error": f"FCM Token for user {user_id} not found"}), 404
-    return jsonify({"token": FCM_token}), 200 
+    
+    return jsonify({"token": FCM_token}), 200
