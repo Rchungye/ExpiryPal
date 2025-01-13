@@ -35,7 +35,7 @@ Inside the `/be` folder:
     ```sh
     pip install -r .\requirements.txt
     ```
-- Create a `.env` file in the root directory with the following structure:
+- Create a `.env` file in the root BE directory with the following structure:
     ```sh
     DB_CONN = "mysql+pymysql://user:password@host:port/expirypal"
     # Replace user, password, host, and port according to your MySQL configuration.
@@ -75,7 +75,7 @@ Inside the `/fe` folder:
     ```sh
     cd .\fe\
     ```
-- Create a `.env` file in the root directory with the following structure:
+- Create a `.env` file in the root FE directory with the following structure:
     ```sh
     VITE_BE_URL=your_backend_url_here
     # Replace the URL with the one generated when running the backend.
@@ -116,7 +116,7 @@ Inside the `/ML` folder:
     ```sh
     pip install -r .\requirements.txt
     ```
-- Create a `.env` file in the root directory with the following structure:
+- Create a `.env` file in the root ML directory with the following structure:
     ```sh
     DB_CONN = "mysql+pymysql://user:password@host:port/expirypal"
     # Replace user, password, host, and port according to your MySQL configuration.
