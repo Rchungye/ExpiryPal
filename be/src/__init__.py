@@ -5,7 +5,6 @@ from src.config import config
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from dotenv import load_dotenv
 from flask_apscheduler import APScheduler
 
 APP_ROOT = os.path.join(os.path.dirname(__file__), "..")

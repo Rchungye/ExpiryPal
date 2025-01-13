@@ -1,6 +1,9 @@
 from src import app, scheduler, db
 import json
 import requests
+import os
+from dotenv import load_dotenv
+load_dotenv()
 from flask import g, jsonify, request
 from src.models.user import User
 from src.controllers import (
@@ -8,7 +11,9 @@ from src.controllers import (
     ItemController as Item,
     HASSController as HASS
 )
-ml_endpoint = "http://127.0.0.1:5000/"
+
+ML_URL = os.getenv("ML_URL")
+HASS_BASE_URL = os.getenv("HASS_BASE_URL")
 
 
 @app.route("/camera/all", methods=["GET"])
@@ -21,22 +26,19 @@ def GetAllCameras():
 def obtener_url_camara_route():
     """
     Ruta para obtener la URL de la cámara desde Home Assistant.
-
     Query Params:
         - entity_id (str): ID de la entidad de la cámara.
         - base_url (str): URL base del servidor de Home Assistant.
-
     Returns:
         JSON con el estado de la operación y la URL de la cámara.
     """
     entity_id = request.args.get("entity_id")
     base_url = request.args.get("base_url")
-    
     if not entity_id or not base_url:
         return jsonify({"status": 400, "message": "Faltan parámetros necesarios."})
-    
-    resultado = HASS.obtener_url_camara(entity_id, base_url)
+    resultado = HASS.get_camera_url(entity_id, base_url)
     return jsonify(resultado)
+
 
 @scheduler.task("interval", id="actualizar_url_camara", minutes=1)
 def actualizar_url_camara_task():
@@ -48,12 +50,10 @@ def actualizar_url_camara_task():
         if not is_any_user_linked_to_a_fridge():
             print("No users linked to any fridge. Skipping task.")
             return
-
         users = User.query.all()
         for user in users:
             if not user.fridges:
                 continue
-
             for fridge in user.fridges:
                 print(f"Processing fridge {fridge.id} for user {user.id}")
                 camera = Camera.get_camera_by_fridge(fridge.id)
@@ -61,8 +61,10 @@ def actualizar_url_camara_task():
                     print(f"No camera found for fridge {fridge.id}.")
                     continue
                 
-                
-                base_url = "https://hass.mdu-smartroom.se"
+                base_url = HASS_BASE_URL
+                print("*************************************")
+                print(base_url)
+                print("*************************************")
                 result = Camera.upload_last_picture_from_fridgeCam_to_cloudinary(camera.entity_id, base_url, fridge.id)
 
                 if result.get("status") != 200:
@@ -107,15 +109,14 @@ def actualizar_url_camara_task():
                         print(f"Error sending image pair to ML model: {ml_result.get('message')}")
                     else:
                         print(f"ML model processed image pair for fridge {fridge.id}: {ml_result}")
-        
+
+
 @staticmethod
 def upload_cropped_items_if_first_time(payload):
     """
     Upload cropped items to Cloudinary if it is the first time the fridge is being used.
-
     Args:
         payload (dict): Contains 'items', 'fridge_id', and 'camera_id'.
-
     Returns:
         dict: Response from Cloudinary.
     """
@@ -132,7 +133,7 @@ def upload_cropped_items_if_first_time(payload):
     
     # print("payload sent to ML: ", payload)
     try:
-        response = requests.post(f"{ml_endpoint}ml/upload_items_if_first_time", json=payload)
+        response = requests.post(f"{ML_URL}ml/upload_items_if_first_time", json=payload)
         if response.status_code == 200:
             print("Cropped items successfully uploaded to Cloudinary.")
             return response.json()
@@ -147,7 +148,6 @@ def upload_cropped_items_if_first_time(payload):
 def is_any_user_linked_to_a_fridge():
     """
     Verifica si hay algún usuario vinculado a un refrigerador.
-
     Returns:
         bool: True si hay al menos un usuario vinculado, False en caso contrario.
     """
@@ -158,19 +158,16 @@ def is_any_user_linked_to_a_fridge():
 def get_last_image(camera_id):
     """
     Get the last picture URL taken by a specific camera.
-
     Args:
         camera_id (int): The ID of the camera.
-
     Returns:
         JSON containing the last picture URL.
     """
     result = Camera.get_last_picture_url(camera_id)
-
     if result["status"] == "error":
         return jsonify({"error": result["message"]}), 404
-
     return jsonify({"last_picture_url": result["last_picture_url"]}), 200
+
 
     # def send_to_ml(image_url):
     #     """

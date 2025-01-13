@@ -25,6 +25,7 @@ from src.middleware import (
     secure as middelware
 )
 
+
 @app.route('/groceries', methods=['GET'])
 @middelware.require_auth
 def groceries():
@@ -56,7 +57,8 @@ def register_token():
 
     return result
 
-@scheduler.task("interval", id="send_notifications", minutes=0.2)
+
+@scheduler.task("interval", id="send_notifications", minutes=10000)
 def send_notifications():
     print("\n\nChecking if notifications should be sent...")
     with app.app_context():  # Necesario para acceder al contexto de Flask
@@ -132,12 +134,13 @@ def send_notifications():
                         message = messaging.Message(
                             notification=messaging.Notification(
                                 title="Unused Item Alert",
-                                body=f"The item '{item.get("name")}' has not been used for a while."
+                                body=f'The item "{item.get("name")}" has not been used for a while.'
                             ),
                             token=user.fcm_token,
                         )
-                        print(f"UNUSED NOT: Sending notification to user {user.id} for item {item.get("id")}")
+                        print(f'UNUSED NOT: Sending notification to user {user.id} for item {item.get("id")}')
                         messaging.send(message)
+
 
 @app.route('/getcookies', methods=['GET'])
 def getcookies():

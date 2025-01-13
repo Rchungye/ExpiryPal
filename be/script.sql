@@ -2,14 +2,14 @@ CREATE DATABASE ExpiryPal;
 USE ExpiryPal;
 
 
-INSERT INTO camera(fridge_id, model, brand, accessURL, entity_id)
-VALUES (1, "wi", "dlink", "variable", "camera.192_168_8_125");
-select * from camera;
-
-
 INSERT INTO fridge (id, model, brand, code) 
 VALUES (1, 'Model X', 'Brand Y', 'FRIDGE123');
 select * from fridge;
+
+
+INSERT INTO camera(fridge_id, model, brand, accessURL, entity_id)
+VALUES (1, "wi", "dlink", "variable", "camera.192_168_8_125");
+select * from camera;
 
 
 INSERT INTO item (fridge_id, name, addedDate, expirationDate, imageURL) VALUES

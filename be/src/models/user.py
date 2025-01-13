@@ -4,8 +4,11 @@ from src import db
 from src.models.fridge import fridge_user
 from secrets import token_urlsafe
 import jwt
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-SECRET_KEY = "a70bdb3ac58cedf0a4e0a13836ee06c3ee9d73ec0ffdef981b27dabf119495ca"
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
 
 class User(db.Model):
@@ -13,7 +16,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False)
     fridges = db.relationship('Fridge', secondary=fridge_user, back_populates='users')
-    auth_token = db.Column(db.Text, unique=True, nullable=True)
+    auth_token = db.Column(db.String(512), unique=True, nullable=True)
     fcm_token = db.Column(db.Text, nullable=True)
 
     def as_dict(self):
@@ -28,7 +31,7 @@ class User(db.Model):
             "iat": datetime.datetime.now().timestamp(),  # Marca de tiempo actual
             "exp": datetime.datetime.utcnow() + timedelta(days=180)  # Expira en 6 meses
         }
-        token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+        token = jwt.encode(payload, JWT_SECRET_KEY, algorithm="HS256")
         self.auth_token = token
         db.session.commit()
         return token
@@ -39,7 +42,7 @@ class User(db.Model):
         Decodifica el JWT para obtener el ID del usuario.
         """
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=["HS256"])
             return payload
         except jwt.ExpiredSignatureError:
             print("Token has expired")

@@ -15,10 +15,12 @@ from flask import jsonify, make_response, request
 from math import floor
 from sqlalchemy.orm import joinedload
 
+
 APP_ROOT = os.path.join(os.path.dirname(__file__), "..")
 dotenv_path = os.path.join(APP_ROOT, ".env")
 load_dotenv(dotenv_path)
 RUNNING_SERVER_IP = os.getenv("RUNNING_SERVER_IP")
+
 
 def get_user_from_cookie(auth_token):
     """
@@ -27,14 +29,12 @@ def get_user_from_cookie(auth_token):
     if not auth_token:
         print("No auth_token provided")
         return None
-
     user_payload = User.decode_jwt(auth_token)
     print(user_payload)
     user_id = user_payload.get("user_id")
     if not user_id:
         print("Invalid or expired token")
         return None
-
     user = User.query.get(user_id)
     if not user:
         print(f"User not found for user_id: {user_id}")
@@ -48,29 +48,26 @@ def is_duplicate_request(auth_token):
     user_id = User.decode_jwt(auth_token)
     if not user_id:
         return False
-
     payload = User.decode_jwt(auth_token)
     last_attempt = payload.get("iat")
     if not last_attempt:
         return False
-
     now = int(datetime.now(timezone.utc).timestamp())
     if now - last_attempt < 5:
         return True  # Es duplicada
     return False
+
 
 def link_user_to_fridge(fridge_code):
     """
     Vincula al usuario con el refrigerador mediante un código QR.
     """
     print(f"Linking user to fridge with code: {fridge_code}")
-
     # Verifica que el refrigerador existe
     fridge = Fridge.query.filter_by(code=fridge_code).first()
     if not fridge:
         print("Fridge not found")
         return make_response(jsonify({"error": "Fridge not found"}), 404)
-
     user = User(username="ExpiryUser")
     db.session.add(user)
     db.session.commit()
@@ -116,29 +113,27 @@ def get_user_by_fridge(fridge_id):
     """
     # Buscar el refrigerador por su id
     fridge = Fridge.query.get(fridge_id)
-    
     if fridge:
         # Devuelve la lista de usuarios asociados a este refrigerador
         return fridge.users  # Esto devuelve la lista de objetos 'User'
     else:
         return None  # Si no se encuentra el refrigerador
 
+
 @staticmethod
 def GetCamerasByFridgeId(fridge_id):
     """
     Retrieves cameras associated with a specific fridge.
-
     Args:
         fridge_id (int): The ID of the fridge.
-
     Returns:
         ControllerObject: An object containing the camera data and status code.
     """
-
     cameras = Camera.query.filter_by(fridge_id=fridge_id).all()
     return ControllerObject(
         payload=[camera.as_dict() for camera in cameras], status=200
     )
+
 
 def GetNotificationPreferencesByFridgeId(fridge_id):
     fridge = Fridge.query.filter_by(id=fridge_id).first()
@@ -147,7 +142,6 @@ def GetNotificationPreferencesByFridgeId(fridge_id):
             payload={"error": "Fridge not found"},
             status=404
         )
-
     preferences = {}
     return ControllerObject(
         payload=preferences,
@@ -159,10 +153,8 @@ def GetFridgeQr(fridge_code):
     """
     Generates a QR code for a given fridge. The QR contains a URL
     that links to the fridge with its unique code.
-
     Args:
         fridge_code (str): The unique code of the fridge.
-
     Returns:
         ControllerObject: Contains the QR code path and URL.
     """
@@ -173,7 +165,6 @@ def GetFridgeQr(fridge_code):
             payload={"error": "Fridge not found"},
             status=404
         )
-
     # Generate the QR code URL
     qr_url = f"{RUNNING_SERVER_IP}/link?code={fridge_code}"
     qr = qrcode.QRCode(
@@ -184,13 +175,11 @@ def GetFridgeQr(fridge_code):
     )
     qr.add_data(qr_url)
     qr.make(fit=True)
-
     # Save the QR code
     qr_code_dir = os.path.join(os.path.dirname(__file__), "../qrcodes")
     os.makedirs(qr_code_dir, exist_ok=True)
     save_path = os.path.join(qr_code_dir, f"{fridge_code}.png")
     qr.make_image(fill_color="black", back_color="white").save(save_path)
-
     return ControllerObject(
         payload={"qr_code_path": save_path, "qr_url": qr_url},
         status=200
@@ -200,10 +189,8 @@ def GetFridgeQr(fridge_code):
 def get_user_fridge_id(auth_token):
     """
     Obtiene el fridge_id vinculado al usuario basado en el auth_token.
-
     Args:
         auth_token (str): Token de autenticación del usuario.
-
     Returns:
         int: ID del refrigerador vinculado al usuario.
     """

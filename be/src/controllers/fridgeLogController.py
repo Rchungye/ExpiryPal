@@ -4,9 +4,9 @@ from src.models.user import User
 from src import db
 from . import ControllerObject
 
+
 def getFridgeLog(fridge_id):
     fridge = db.session.query(Item).filter(Item.fridge_id == fridge_id).first()
-    
     if not fridge:
         return ControllerObject(
             title="Error",

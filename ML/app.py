@@ -3,6 +3,8 @@ import shutil
 from flask import Flask, request, render_template, jsonify, send_from_directory
 from ultralytics import YOLO
 import os
+from dotenv import load_dotenv
+load_dotenv()
 import cv2
 from sklearn.metrics.pairwise import cosine_similarity
 from transformers import CLIPProcessor, CLIPModel
@@ -18,13 +20,13 @@ import uuid
 
 # Configuration       
 cloudinary.config( 
-    CLOUD_NAME="dqwutjyjh",
-    API_KEY="132533594763411",
-    API_SECRET="cW4iHQs41fcqnnOFGSyDKVQJel8",
+    CLOUD_NAME= os.getenv("CLOUDINARY_CLOUD_NAME"),
+    API_KEY= os.getenv("CLOUDINARY_API_KEY"),
+    API_SECRET= os.getenv("CLOUDINARY_API_SECRET"),
     secure=True
 )
 
-backend_url = "http://127.0.0.1:5001/"
+BE_URL = os.getenv("BE_URL")
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -311,7 +313,7 @@ def upload_items_if_first_time():
     try:
         print(f"Sending items to backend for fridge {fridge_id}")
         print(f"Items: {uploaded_items}")
-        add_batch_be_url = f"{backend_url}items/add_items"
+        add_batch_be_url = f"{BE_URL}items/add_items"
         backend_response = requests.post(add_batch_be_url, json={"items": uploaded_items})
         if backend_response.status_code != 200:
             return jsonify({
@@ -445,7 +447,7 @@ def compare_items_from_fridge():
         print("after for loop")
         if added_items:
             print("\n\nAdding items to the backend...")
-            add_items_url = f"{backend_url}items/add_items"
+            add_items_url = f"{BE_URL}items/add_items"
             print("be url: ", add_items_url) 
             print("added items: ", added_items)
             payload = {"items": added_items}
@@ -464,7 +466,7 @@ def compare_items_from_fridge():
                     print(f"Missing item_id for item: {item}")
                     continue
 
-                delete_item_url = f"{backend_url}/items/{item_id}"
+                delete_item_url = f"{BE_URL}/items/{item_id}"
                 print(f"Deleting item {item_id} from the backend...")
                 print("delete url: ", delete_item_url)
                 response = requests.delete(delete_item_url)

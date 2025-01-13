@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import itemsData from "../assets/jsons/items.json";
 
 function Item() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const item = itemsData.items.find((item) => item.id === parseInt(id));
 
   const [expirationDate, setExpirationDate] = useState(item?.date || "");
 

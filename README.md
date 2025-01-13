@@ -10,6 +10,9 @@ DESCRIPTION OF THE PROJECT
 - JavaScript with Vite + React.js
 - TailwindCSS
 - Material UI
+- YOLO
+- Cloudinary
+- Firebase
 
 ## Backend Configuration (Flask)
 
@@ -28,7 +31,7 @@ Inside the `/be` folder:
     ```sh
     .\name_of_venv\Scripts\activate
     ```
-- Install the Flask project dependencies with the command:
+- Install the Flask BE project dependencies with the command:
     ```sh
     pip install -r .\requirements.txt
     ```
@@ -36,6 +39,13 @@ Inside the `/be` folder:
     ```sh
     DB_CONN = "mysql+pymysql://user:password@host:port/expirypal"
     # Replace user, password, host, and port according to your MySQL configuration.
+    ML_URL = "your_MachineLearning_url_here"
+    JWT_SECRET_KEY = "JWT_SECRET_KEY"
+    HASS_API_KEY = 'HOME_ASSISTANT_API_KEY'
+    HASS_BASE_URL = 'https://hass.mdu-smartroom.se'
+    CLOUDINARY_CLOUD_NAME = "CLOUDINARY_CLOUD_NAME"
+    CLOUDINARY_API_KEY = "CLOUDINARY_API_KEY"
+    CLOUDINARY_API_SECRET = "CLOUDINARY_API_SECRET"
     ```
 > If necessary, delete the migrations folder (only if the migration doesn't run properly).
 - Run the following command to prepare the migration:
@@ -50,7 +60,7 @@ Inside the `/be` folder:
     ```sh
     flask db upgrade
     ```
-- Run the following command to start the Flask project:
+- Run the following command to start the Flask BE project:
     ```sh
     py app.py
     ```
@@ -79,6 +89,47 @@ Inside the `/fe` folder:
     npm run dev
     ```
 - The frontend should now be running.
+
+## Machine Learning Configuration (Flask)
+
+Follow these steps and commands when cloning the project:
+
+Inside the `/ML` folder:
+- Run the following command to navigate to the backend directory:
+    ```sh
+    cd .\ML\
+    ```
+- Create a virtual environment in the root directory with the command:
+    ```sh
+    python -m venv name_of_venv
+    ```
+- Navigate to the virtual environment directory with the command:
+    ```sh
+    .\name_of_venv\Scripts\activate
+    ```
+- Enter the following link and download the 2 files (**yolov8x-seg.pt** and **clip-vit-base-patch32**):
+    ```sh
+    https://drive.google.com/drive/folders/1JH9ruRaYMBEmpRF97fKQDsGQayKEujhI
+    ```
+- Put both files in ML folder.
+- Install the Flask ML project dependencies with the command:
+    ```sh
+    pip install -r .\requirements.txt
+    ```
+- Create a `.env` file in the root directory with the following structure:
+    ```sh
+    DB_CONN = "mysql+pymysql://user:password@host:port/expirypal"
+    # Replace user, password, host, and port according to your MySQL configuration.
+    BE_URL = "your_backend_url_here"
+    CLOUDINARY_CLOUD_NAME = "CLOUDINARY_CLOUD_NAME"
+    CLOUDINARY_API_KEY = "CLOUDINARY_API_KEY"
+    CLOUDINARY_API_SECRET = "CLOUDINARY_API_SECRET"
+    ```
+- Run the following command to start the Flask ML project:
+    ```sh
+    py app.py
+    ```
+- The machine learning should now be running.
 
 ## Common Issues
 

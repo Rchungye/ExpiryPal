@@ -7,18 +7,16 @@ from src.models.camera import Camera
 import cloudinary
 import cloudinary.uploader
 import requests
-from bs4 import BeautifulSoup
 import os
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 from io import BytesIO
 
 
-
 APP_ROOT = os.path.join(os.path.dirname(__file__), "..")
 dotenv_path = os.path.join(APP_ROOT, ".env")
 load_dotenv(dotenv_path)
-ml_endpoint = "http://127.0.0.1:5000/"
+ML_URL = os.getenv("ML_URL")
 
 
 def GetAllCameras():
@@ -26,25 +24,23 @@ def GetAllCameras():
     return ControllerObject(
         payload=[camera.as_dict() for camera in cameras], status=200)
 
+
 def get_camera_by_fridge(fridge_id):
     """
     Obtiene el objeto de la cámara asociada a un refrigerador.
-
     Args:
         fridge_id (int): ID del refrigerador.
-
     Returns:
         Camera: Objeto de la cámara asociada al refrigerador o None si no existe.
     """
     return Camera.query.filter_by(fridge_id=fridge_id).first()
 
+
 def get_entity_id_by_fridge(fridge_id):
     """
     Obtiene el ID de la entidad de la cámara asociada a un refrigerador.
-
     Args:
         fridge_id (int): ID del refrigerador.
-
     Returns:
         str: ID de la entidad de la cámara asociada.
     """
@@ -52,14 +48,11 @@ def get_entity_id_by_fridge(fridge_id):
     return camera.entity_id if camera else None
 
 
-
 def takeScreenshotAsBytes(page_url):
     """
     Take a screenshot of the page using Playwright and return the bytes.
-
     Args:
         page_url (str): Page URL to take the screenshot from.
-
     Returns:
         BytesIO: Image taken as bytes.
     """
@@ -70,7 +63,6 @@ def takeScreenshotAsBytes(page_url):
             page.goto(page_url, wait_until="networkidle")  # wait for the page to load
             screenshot_bytes = page.screenshot(path=None)  # take the screenshot
             browser.close()
-
         print("Screenshot taken successfully and saved in memory.")
         return BytesIO(screenshot_bytes)  # return the image as bytes
     except Exception as err:
@@ -81,20 +73,16 @@ def takeScreenshotAsBytes(page_url):
 def upload_image_to_cloudinary_from_bytes(image_bytes, fridge_id, tags=None ):
     """
     Uploads the image taken from the fridge to cloudinary 
-
     Args:
         image_bytes (BytesIO): Image in binary format.
         tags (list[str]): Tags to assign to the image.
-
     Returns:
         str: uploaded image URL.
     """
     if not isinstance(image_bytes, BytesIO):
         raise ValueError("Image obj not valid (must be BytesIO).")
-
     # FOLDER PATH
     folder_path = f"Fridges/{fridge_id}/ImagesFromFridge"
-
     try:
         # Subir la imagen con las etiquetas
         response = cloudinary.uploader.upload(
@@ -116,37 +104,29 @@ def upload_last_picture_from_fridgeCam_to_cloudinary(entity_id, base_url, fridge
         entity_id (str): Camera entity ID.
         base_url (str): Home Assistant server base URL.
         fridge_id (str): fridge ID.
-
     Returns:
         dict: Resultado del procesamiento.
     """
     url_data = get_camera_url(entity_id, base_url)
-
     if url_data["status"] != 200:
         return {"status": 400, "message": "Camera URL not obtained."}
     if not fridge_id:
         return {"status": 400, "message": "Fridge ID no es válido."}
     
-
     try:
         # Capturar el pantallazo en memoria como bytes
         # print("/nTaking screenshot for fridge:", fridge_id, "from URL:", url_data["url"])
         screenshot_bytes = takeScreenshotAsBytes(url_data["url"])
-
         if not screenshot_bytes:
             return {"status": 500, "message": "Screenshot not captured."}
-
         # Subir los bytes a Cloudinary
         tags = [f"fridge_{fridge_id}", "last_image_from_fridge"]
         uploaded_url = upload_image_to_cloudinary_from_bytes(screenshot_bytes, fridge_id, tags=tags)
-
         if not uploaded_url:
             return {"status": 500, "message": "Error uploading image to Cloudinary."}
-
         Camera.last_picture_url = uploaded_url
         db.session.commit()
         
-
         return {"status": 200, "message": "last_picture_url updated successfully.", "uploaded_url": uploaded_url}
 
     except Exception as err:
@@ -156,28 +136,17 @@ def upload_last_picture_from_fridgeCam_to_cloudinary(entity_id, base_url, fridge
 def compare_items(payload):
     """
     Send items in the fridge to the ML model for comparison with last picture taken from the fridge.
-
     Args:
         payload (dict): Contains 'items_in_fridge', 'last_img_url', and 'fridge_id'.
-
     Returns:
         dict: Response from the ML model.
     """
-
-    # print("\n\nSending items to ML model for comparison...\n")
-    # print("payload:", payload)
-    # print("\n\nPayload types before sending to ML model:")
-    # print_payload_types(payload)
-
     for item in payload["items_in_fridge"]["payload"]:
         for key, value in item.items():
             if isinstance(value, (datetime, date)):
                 item[key] = value.isoformat()  # Convertir cualquier fecha a formato ISO
-
-    # print ("\n\nPayload types after converting dates to ISO:")
-    # print_payload_types(payload)
     try:
-        route = f'{ml_endpoint}ml/compare_items_from_fridge'
+        route = f'{ML_URL}ml/compare_items_from_fridge'
         response = requests.post(route, json=payload)
         if response.status_code == 200:
             print("Image comparison successfully processed by ML model.")
@@ -189,40 +158,19 @@ def compare_items(payload):
         print(f"Error connecting to ML model: {e}")
         return {"status": "error", "message": str(e)}
 
-def print_payload_types(payload, level=0):
-    """
-    Imprime los tipos de datos en un payload de manera recursiva.
-    """
-    indent = "  " * level  # Indentación para niveles anidados
-    if isinstance(payload, dict):
-        print(f"{indent}Dict:")
-        for key, value in payload.items():
-            print(f"{indent}  {key}: {type(value)}")
-            print_payload_types(value, level + 1)
-    elif isinstance(payload, list):
-        print(f"{indent}List:")
-        for index, item in enumerate(payload):
-            print(f"{indent}  Index {index}: {type(item)}")
-            print_payload_types(item, level + 1)
-    else:
-        print(f"{indent}Value: {payload}, Type: {type(payload)}")
 
 def get_last_picture_url(camera_id):
     """
     Retrieve the last picture URL for a given camera.
-
     Args:
         camera_id (int): The ID of the camera.
-
     Returns:
         dict: A dictionary containing the last picture URL or an error message.
     """
     camera = Camera.query.get(camera_id)
     if not camera:
         return {"status": "error", "message": "Camera not found"}
-
     if not camera.last_picture_url:
         return {"status": "first_run", "message": "No previous picture available for this camera"}
-
     return {"status": "success", "last_picture_url": camera.last_picture_url}
 
