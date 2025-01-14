@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faX, faEdit } from "@fortawesome/free-solid-svg-icons";
 import PropTypes from "prop-types";
 import { updateItemName, updateItemExpirationDate } from "../services/items"; //API functions
 
@@ -210,11 +211,9 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
         className="bg-white rounded-lg shadow-lg w-11/12 md:w-1/2 lg:w-1/3 p-6 relative"
       >
         {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 text-2xl font-bold"
-        >
-          ×
+        <button onClick={onClose}
+          className="absolute top-5 right-10 text-gray-600 hover:text-gray-800 text-2xl font-bold">
+          <FontAwesomeIcon icon={faX} />
         </button>
 
         {/* Content */}
@@ -238,26 +237,22 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
                   {itemName}
                 </h2>
 
-                <span
-                  className="text-blue-main text-xl ml-2 cursor-pointer edit-icon"
-                  onClick={handleNameClick}
-                >
-                  ✎
+                <span className="text-blue-main text-xl ml-2 cursor-pointer edit-icon" onClick={handleNameClick}>
+                <FontAwesomeIcon icon={faEdit} />
                 </span>
               </>
             )}
           </div>
           {/* Image and Basic Info */}
           <div
-            className={`bg-white rounded-lg shadow p-4 relative inline-block ${
-              expired
-                ? "border border-red-400"
-                : warning === "orange"
+            className={`bg-white rounded-lg shadow p-4 relative inline-block ${expired
+              ? "border border-red-400"
+              : warning === "orange"
                 ? "border border-orange-400"
                 : blueWarning
-                ? "border  border-blue-400"
-                : ""
-            }`}
+                  ? "border  border-blue-400"
+                  : ""
+              }`}
           >
             <img
               src={item.image}
@@ -288,13 +283,12 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
             )}
             {blueWarning && (
               <div
-                className={`absolute ${
-                  warning === "red"
-                    ? "top-2 right-8"
-                    : warning === "orange"
+                className={`absolute ${warning === "red"
+                  ? "top-2 right-8"
+                  : warning === "orange"
                     ? "top-2 right-8"
                     : "top-2 right-2"
-                } bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded`}
+                  } bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded`}
               >
                 !
               </div>
@@ -337,8 +331,8 @@ function ItemModal({ item, onClose, onUpdateItem, onRemoveItem }) {
               ? daysLeft === 0
                 ? `(expires today)`
                 : daysLeft > 0
-                ? `(in ${daysLeft} days)`
-                : `(${Math.abs(daysLeft)} days ago)`
+                  ? `(in ${daysLeft} days)`
+                  : `(${Math.abs(daysLeft)} days ago)`
               : `(Expiration N/A)`}
           </p>
           {/* Actions */}

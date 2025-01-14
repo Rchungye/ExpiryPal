@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getFridgeLog } from "../services/fridge"; // Import API function
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 const Log = () => {
   const navigate = useNavigate();
@@ -32,11 +34,9 @@ const Log = () => {
     <div className="bg-gray-100 min-h-screen font-roboto">
       <header className="bg-blue-main text-white sticky top-0 z-10">
         <div className="max-w-[1024px] flex justify-between items-center p-4 relative mx-auto ">
-          <button
-            onClick={() => navigate("/fridge/groceries")}
-            className="absolute left-4 text-3xl cursor-pointer"
-          >
-            ←
+          <button onClick={() => navigate("/fridge/groceries")}
+            className="absolute left-4 text-3xl cursor-pointer" >
+            <FontAwesomeIcon icon={faArrowLeft} />
           </button>
           <h1 className="text-3xl mx-auto">FRIDGE LOG</h1>
         </div>
@@ -44,20 +44,10 @@ const Log = () => {
 
       {/* Unique ID Section */}
       <div className="max-w-[512px] mx-auto p-4">
-        <div className="p-4">
-          <p className="text-sm text-gray-700">
-            Your unique ID:{" "}
-            <span className="font-bold text-[#285D85]">Petar2</span>
-            <span className="text-[#285D85] ml-1 cursor-pointer">✎</span>
-          </p>
-        </div>
         {/* Log List */}
         <div className="p-4 space-y-4">
           {logs.map((log, index) => (
-            <div
-              key={index}
-              className="bg-white p-3 rounded shadow text-sm text-gray-700"
-            >
+            <div key={index} className="bg-white p-3 rounded shadow text-sm text-gray-700">
               {log}
             </div>
           ))}

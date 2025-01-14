@@ -62,9 +62,6 @@ def actualizar_url_camara_task():
                     continue
                 
                 base_url = HASS_BASE_URL
-                print("*************************************")
-                print(base_url)
-                print("*************************************")
                 result = Camera.upload_last_picture_from_fridgeCam_to_cloudinary(camera.entity_id, base_url, fridge.id)
 
                 if result.get("status") != 200:

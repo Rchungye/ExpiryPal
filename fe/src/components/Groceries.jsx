@@ -5,7 +5,7 @@ import ItemModal from "./ItemModal";
 import { getItemsByFridgeId, deleteItemById } from "../services/items";
 import { getNotificationPreferences } from "../services/notificationService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell } from "@fortawesome/free-solid-svg-icons";
+import { faBell, faX, faBars } from "@fortawesome/free-solid-svg-icons";
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
@@ -15,12 +15,12 @@ import { checkUserLink, checkIfCMFToken } from "../services/api";
 import { onMessage } from "firebase/messaging";
 
 function Groceries() {
-  
+
   const [navBarOpen, setNavBarOpen] = useState(false); //Tracks navbar visibility
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [items, setItems] = useState([]);
-  const [isVerified, setIsVerified] =  useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [cookies, setCookies] = useState([]);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
 
@@ -28,9 +28,9 @@ function Groceries() {
     expiration: 3,
     unusedItem: 7
   });
-  
+
   const navigate = useNavigate();
-  
+
   const fridgeId = 1;
   const [sortOption, setSortOption] = useState("newest");
   const [searchQuery, setSearchQuery] = useState(""); //State for search query
@@ -52,7 +52,7 @@ function Groceries() {
   useEffect(() => {
     // Si ya está verificado, no hacer nada
     if (isVerified) return;
-  
+
     const fetchCookies = async () => {
       console.log("Getting cookies...");
       try {
@@ -73,7 +73,7 @@ function Groceries() {
       try {
         const response = await checkIfCMFToken();
         console.log("isCMFToken:", response);
-    
+
         if (response.status === 200) {
           console.log("CMF Token exists:", response.data);
           // Usuario autenticado y linkeado
@@ -100,7 +100,7 @@ function Groceries() {
         }
       }
     };
-    
+
     const checkAuthToken = async () => {
       try {
         const response = await checkUserLink();
@@ -119,14 +119,14 @@ function Groceries() {
         navigate("/"); // Manejar casos de error redirigiendo a una página segura
       }
     };
-  
+
     // Ejecutar ambas funciones de verificación
     fetchCookies();
     checkAuthToken();
     checkCMFToken();
   }, [isVerified, navigate]); // Dependencias: isVerified y navigate
-  
-  
+
+
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -144,7 +144,7 @@ function Groceries() {
         console.error("Failed to fetch items:", error);
       }
     };
-  
+
     const fetchNotificationPreferences = async () => {
       try {
         const response = await getNotificationPreferences(fridgeId);
@@ -155,11 +155,11 @@ function Groceries() {
               expiration: response.expiration,
               unusedItem: response.unusedItem,
             });
-          } 
+          }
         } else {
           // Si no hay respuesta o datos, asigna los valores predeterminados
           const response = await saveNotificationPreferences({
-            fridge_id : fridgeId,
+            fridge_id: fridgeId,
             expiration: 3,
             unusedItem: 7
           })
@@ -178,12 +178,12 @@ function Groceries() {
         });
       }
     };
-  
+
     // Llamar a la función para obtener las preferencias de notificación
     fetchNotificationPreferences();
     fetchItems();
   }, [fridgeId]);
-  
+
 
   const toggleNavBar = () => {
     setNavBarOpen((prev) => !prev);
@@ -251,7 +251,7 @@ function Groceries() {
   const handleRemoveItem = (itemId) => {
     setItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
     deleteItemById(itemId);
-    
+
   };
 
   const calculateDaysLeft = (expDate) => {
@@ -321,11 +321,8 @@ function Groceries() {
           <h1 className="text-3xl">ALL ITEMS</h1>
 
           <div className="flex justify-center relative">
-            <FontAwesomeIcon
-              icon={faBell}
-              className="h-8 cursor-pointer hover:text-gray-200"
-              onClick={() => setNotificationModalOpen(true)}
-            />
+            <FontAwesomeIcon icon={faBell} className="h-8 cursor-pointer hover:text-gray-200"
+              onClick={() => setNotificationModalOpen(true)} />
             {getNotificationItems().length > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {getNotificationItems().length}
@@ -333,31 +330,23 @@ function Groceries() {
             )}
           </div>
 
-          <button
-            onClick={toggleNavBar}
-            className="text-3xl cursor-pointer menu-button"
-          >
-            {navBarOpen ? "×" : "☰"}
+          <button onClick={toggleNavBar} className="text-3xl cursor-pointer menu-button">
+            {navBarOpen ? <FontAwesomeIcon icon={faX} /> : <FontAwesomeIcon icon={faBars} />}
           </button>
         </div>
       </header>
 
       {/* Notifications Modal */}
-      <Modal
-        open={notificationModalOpen}
-        onClose={() => setNotificationModalOpen(false)}
-        aria-labelledby="notification-modal-title"
-      >
+      <Modal open={notificationModalOpen} onClose={() => setNotificationModalOpen(false)}
+        aria-labelledby="notification-modal-title">
         <Box sx={modalStyle}>
           <div className="flex justify-between items-center mb-4">
-            <Typography variant="h6" component="h2">
+            <Typography variant="h4" component="h2">
               Notifications
             </Typography>
-            <button
-              onClick={() => setNotificationModalOpen(false)}
-              className="text-2xl font-bold hover:text-gray-700"
-            >
-              ×
+            <button onClick={() => setNotificationModalOpen(false)}
+              className="text-2xl font-bold hover:text-gray-700">
+              <FontAwesomeIcon icon={faX} />
             </button>
           </div>
 
@@ -369,11 +358,8 @@ function Groceries() {
 
               return (
                 <div key={item.id} className="flex items-center bg-white p-4 rounded-lg shadow">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-16 h-16 object-contain mr-4"
-                  />
+                  <img src={item.image} alt={item.name}
+                    className="w-16 h-16 object-contain mr-4" />
                   <div className="flex-grow">
                     <h3 className="font-bold text-lg">{item.name}</h3>
                     <p className="text-sm text-gray-600">
@@ -411,18 +397,11 @@ function Groceries() {
         {/*Dropdown and Search Bar*/}
         <div className="flex items-end px-4 py-2 bg-gray-100 space-x-4">
           <div className="flex flex-col">
-            <label
-              htmlFor="sort"
-              className="text-lg font-bold text-gray-700 mb-1"
-            >
+            <label htmlFor="sort" className="text-lg font-bold text-gray-700 mb-1"            >
               Sort by:
             </label>
-            <select
-              id="sort"
-              className="border rounded px-3 py-2 bg-white shadow-sm focus:outline-none"
-              value={sortOption}
-              onChange={handleSortChange}
-            >
+            <select id="sort" className="border rounded px-3 py-2 bg-white shadow-sm focus:outline-none"
+              value={sortOption} onChange={handleSortChange} >
               <option value="newest">Newest</option>
               <option value="oldest">Oldest</option>
               <option value="expiry-soon">Expiring Soon</option>
@@ -431,20 +410,13 @@ function Groceries() {
 
           {/*Search Bar*/}
           <div className="flex-grow max-w-[300px]">
-            <input
-              type="text"
-              placeholder="Search items..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="border rounded px-3 py-2 bg-white shadow-sm focus:outline-none w-full"
-            />
+            <input type="text" placeholder="Search items..." value={searchQuery} onChange={handleSearchChange}
+              className="border rounded px-3 py-2 bg-white shadow-sm focus:outline-none w-full" />
           </div>
         </div>
 
-        <div
-          className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4"
-          style={{ minHeight: "300px" }}
-        >
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4"
+          style={{ minHeight: "300px" }} >
           {filteredAndSortedItems.map((item) => {
             //Calculate daysLeft and expired dynamically
             const daysLeft = calculateDaysLeft(item.dateExp);
@@ -470,9 +442,9 @@ function Groceries() {
                   : warning === "orange"
                     ? "border border-orange-400"
                     : blueWarning
-                    ? "border border-blue-400"
-                    : ""
-                }`}
+                      ? "border border-blue-400"
+                      : ""
+                  }`}
               >
                 {isNew && (
                   <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
@@ -501,27 +473,17 @@ function Groceries() {
                     !
                   </div>
                 )}
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-full h-24 object-contain rounded mb-3"
-                />
+                <img src={item.image} alt={item.name} className="w-full h-24 object-contain rounded mb-3" />
                 <p className="font-semibold">{item.name}</p>
                 <span className="text-gray-500 text-sm block">
-                  {item.dateExp ? item.dateExp : "Expiration N/A"}
+                  Added: {item.dateAdded}
                 </span>
-                <span
-                  className={`text-sm font-semibold ${expired
-                    ? "text-red-600"
-                    : warning === "orange"
-                      ? "text-orange-600"
-                      : "text-gray-600"
-                    }`}
-                >
-                  {daysLeft !== null
+                <span className={`text-sm font-semibold ${expired
+                  ? "text-red-600" : warning === "orange"
+                    ? "text-orange-600" : "text-gray-600"}`} >
+                  Exp: {daysLeft !== null
                     ? daysLeft === 0
-                      ? "Expires today"
-                      : `${Math.abs(daysLeft)} days ${expired ? "ago" : "left"}`
+                      ? "Expires today" : `${Math.abs(daysLeft)} days ${expired ? "ago" : "left"}`
                     : "N/A"}
                 </span>
               </div>
@@ -532,20 +494,15 @@ function Groceries() {
 
       {/*Sliding NavBar*/}
       <div
-        className={`fixed top-0 right-0 h-full w-full bg-white transform transition-transform duration-300 ease-in-out ${navBarOpen ? "translate-x-0" : "translate-x-full"
-          }`}
-      >
+        className={`fixed top-0 right-0 h-full w-full bg-white transform transition-transform 
+          duration-300 ease-in-out ${navBarOpen ? "translate-x-0" : "translate-x-full"}`} >
         <NavBar onBackToItems={toggleNavBar} />
       </div>
 
       {/*Item Modal*/}
       {modalOpen && (
-        <ItemModal
-          item={selectedItem}
-          onClose={() => setModalOpen(false)}
-          onUpdateItem={handleUpdateItem}
-          onRemoveItem={handleRemoveItem}
-        />
+        <ItemModal item={selectedItem} onClose={() => setModalOpen(false)}
+          onUpdateItem={handleUpdateItem} onRemoveItem={handleRemoveItem} />
       )}
     </div>
   );

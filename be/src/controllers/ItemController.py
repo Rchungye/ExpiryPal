@@ -48,8 +48,8 @@ def add_items(payload):
                 name=name,
                 imageURL=image_url,
                 fridge_id=fridge_id,
-                expirationDate = "",
-            )
+                expirationDate=None,
+                )
             print(f"Adding item: {new_item}")
             db.session.add(new_item)
             added_count += 1
@@ -73,7 +73,6 @@ def getItemsByFridgeId(fridge_id):
         "payload": [item.as_dict() for item in items],
         "status": 200
     }
-
 
 
 def updateItemName(item_id, user_id, new_name):

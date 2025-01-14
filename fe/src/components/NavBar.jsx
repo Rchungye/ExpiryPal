@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell } from "@fortawesome/free-solid-svg-icons";
+import { faBell, faX } from "@fortawesome/free-solid-svg-icons";
 import {
   getNotificationPreferences,
   saveNotificationPreferences,
@@ -65,8 +65,8 @@ const NavBar = ({ onBackToItems }) => {
       <header className="bg-blue-main  p-4  ">
         <div className="max-w-[1024px] mx-auto text-white flex justify-between items-center relative">
           <h1 className="text-3xl mx-auto">MENU</h1>
-          <button onClick={onBackToItems} className="absolute right-4 text-6xl">
-            ×
+          <button onClick={onBackToItems} className="absolute right-4 text-3xl">
+            <FontAwesomeIcon icon={faX} />
           </button>
         </div>
       </header>
@@ -77,10 +77,7 @@ const NavBar = ({ onBackToItems }) => {
           Notification Settings
         </h2>
         <div className="flex justify-center">
-          <FontAwesomeIcon 
-            icon={faBell} 
-            className="h-8 text-[#285D85]"
-          />
+          <FontAwesomeIcon icon={faBell} className="h-8 text-[#285D85]" />
         </div>
       </div>
 
@@ -89,12 +86,8 @@ const NavBar = ({ onBackToItems }) => {
         <h3 className="font-bold text-lg text-gray-800">Expiration:</h3>
         <p className="text-sm text-gray-700">
           Notify me
-          <input
-            type="number"
-            className="mx-2 border rounded px-2 py-1 text-center w-12"
-            value={expirationDays}
-            onChange={(e) => setExpirationDays(parseInt(e.target.value, 10))}
-          />
+          <input type="number" className="mx-2 border rounded px-2 py-1 text-center w-12"
+            value={expirationDays} onChange={(e) => setExpirationDays(parseInt(e.target.value, 10))} />
           days before expiration.
         </p>
       </div>
@@ -104,22 +97,16 @@ const NavBar = ({ onBackToItems }) => {
         <h3 className="font-bold text-lg text-gray-800">Unused item:</h3>
         <p className="text-sm text-gray-700">
           Notify me if the item has not been used in
-          <input
-            type="number"
-            className="mx-2 border rounded px-2 py-1 text-center w-12"
-            value={unusedDays}
-            onChange={(e) => setUnusedDays(parseInt(e.target.value, 10))}
-          />
+          <input type="number" className="mx-2 border rounded px-2 py-1 text-center w-12"
+            value={unusedDays} onChange={(e) => setUnusedDays(parseInt(e.target.value, 10))} />
           days.
         </p>
       </div>
 
       {/* Save Changes Button */}
       <div className="flex justify-center mt-6">
-        <button
-          className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
-          onClick={handleSaveChanges}
-        >
+        <button className="bg-[#285D85] text-white font-poppins text-xl py-4 px-8 
+        rounded-lg shadow-md hover:bg-[#214a68] transition duration-200" onClick={handleSaveChanges}>
           Save changes
         </button>
       </div>
@@ -127,10 +114,8 @@ const NavBar = ({ onBackToItems }) => {
       {/* Fridge Log Section */}
       <div className="mt-8 text-center">
         <h3 className="text-blue-main font-bold mb-8">View the Fridge Log</h3>
-        <Link
-          to="/fridge/log"
-          className="log-button bg-[#285D85] text-white font-poppins text-xl py-4 px-8 rounded-lg shadow-md hover:bg-[#214a68] transition duration-200"
-        >
+        <Link to="/fridge/log" className="log-button bg-[#285D85] text-white font-poppins text-xl py-4 px-8 
+        rounded-lg shadow-md hover:bg-[#214a68] transition duration-200" >
           Fridge Log
         </Link>
       </div>
