@@ -58,7 +58,7 @@ def register_token():
     return result
 
 
-@scheduler.task("interval", id="send_notifications", minutes=10000)
+@scheduler.task("interval", id="send_notifications", minutes=1)
 def send_notifications():
     print("\n\nChecking if notifications should be sent...")
     with app.app_context():  # Necesario para acceder al contexto de Flask

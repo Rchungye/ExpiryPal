@@ -5,7 +5,7 @@ from datetime import datetime
 class FridgeLog(db.Model):
     __tablename__ = 'fridgeLog'
     id = db.Column(db.Integer, primary_key=True)
-    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id', ondelete="CASCADE"))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=func.now(), nullable=False)
     action = db.Column(db.String(255), nullable=False)  # e.g. "Changed expiration date"
