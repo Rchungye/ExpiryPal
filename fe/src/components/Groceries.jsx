@@ -375,10 +375,8 @@ function Groceries() {
                         'text-gray-600'
                       }`}>
                       {expired
-                        ? `Expired ${Math.abs(daysLeft)} days ago`
-                        : daysLeft === 0
-                          ? "Expires today"
-                          : `Expires in ${daysLeft} days`}
+                        ? `Expired ${Math.abs(daysLeft)} days ago` : daysLeft === 0
+                          ? "Expires today" : `Expires in ${daysLeft} days`}
                     </p>
                   </div>
                 </div>
@@ -438,12 +436,9 @@ function Groceries() {
                 key={item.id}
                 onClick={() => handleItemClick(item)}
                 className={`bg-white rounded-lg shadow p-4 relative text-center cursor-pointer max-w-52 item h-[210px] ${expired
-                  ? "border border-red-400"
-                  : warning === "orange"
-                    ? "border border-orange-400"
-                    : blueWarning
-                      ? "border border-blue-400"
-                      : ""
+                  ? "border border-red-400" : warning === "orange"
+                    ? "border border-orange-400" : blueWarning
+                      ? "border border-blue-400" : ""
                   }`}
               >
                 {isNew && (
@@ -464,10 +459,8 @@ function Groceries() {
                 {blueWarning && (
                   <div
                     className={`absolute ${warning === "red"
-                      ? "top-2 right-8"
-                      : warning === "orange"
-                        ? "top-2 right-8"
-                        : "top-2 right-2"
+                      ? "top-2 right-8" : warning === "orange"
+                        ? "top-2 right-8" : "top-2 right-2"
                       } bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded`}
                   >
                     !

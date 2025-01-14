@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getFridgeLog } from "../services/fridge"; // Import API function
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faEdit } from "@fortawesome/free-solid-svg-icons";
 
 const Log = () => {
   const navigate = useNavigate();
@@ -44,6 +44,13 @@ const Log = () => {
 
       {/* Unique ID Section */}
       <div className="max-w-[512px] mx-auto p-4">
+        <div className="p-4">
+          <p className="text-sm text-gray-700">
+            Your unique ID:{" "}
+            <span className="font-bold text-[#285D85]">Petar2</span>
+            <span className="text-[#285D85] ml-1 cursor-pointer"><FontAwesomeIcon icon={faEdit} /></span>
+          </p>
+        </div>
         {/* Log List */}
         <div className="p-4 space-y-4">
           {logs.map((log, index) => (
