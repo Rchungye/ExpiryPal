@@ -9,5 +9,5 @@ instance
 be/migrations/*
 migrations
 cypress*
-be/src/secret/*
-src/secret/*
+be/src/secret/project-name-firebase-adminsdk.json
+src/secret/project-name-firebase-adminsdk.json

@@ -165,24 +165,3 @@ def get_last_image(camera_id):
         return jsonify({"error": result["message"]}), 404
     return jsonify({"last_picture_url": result["last_picture_url"]}), 200
 
-
-    # def send_to_ml(image_url):
-    #     """
-    #     Envía la URL de la imagen al modelo de ML.
-    #     """
-    #     ml_endpoint = "URL_DEL_ENDPOINT_DEL_MODELO"
-    #     payload = {"image_url": image_url}
-    #     headers = {"Content-Type": "application/json"}
-
-    #     response = requests.post(ml_endpoint, json=payload, headers=headers)
-    #     if response.status_code == 200:
-    #         return response.json()  # Respuesta del modelo (fragmentos de la imagen)
-    #     else:
-    #         return {"error": "Error al enviar la imagen al modelo", "status_code": response.status_code}
-
-    # # Llamada al modelo
-    # print("enviar a modelo: ", send_to_ml("https://res.cloudinary.com/dqfjzjzjg/image/upload/v1630040196/1.jpg"))
-    # model_response = Camera.enviar_a_modelo_ml(uploaded_url)
-    # print(f"Respuesta del modelo: {model_response}")
-
-

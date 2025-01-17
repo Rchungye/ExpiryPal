@@ -1,7 +1,7 @@
 import axios from "axios";
 import { ApiService } from './api.config'
 
-const API_BASE_URL = "http://127.0.0.1:5001"; // Replace with your backend URL
+const API_BASE_URL = import.meta.env.VITE_BE_URL; // Replace with your backend URL
 // const API_BASE_URL = import.meta.env.VITE_BE_URL; // Replace with your backend URL
 axios.withCredentials = true;
 

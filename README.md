@@ -35,18 +35,6 @@ Inside the `/be` folder:
     ```sh
     pip install -r .\requirements.txt
     ```
-- Create a `.env` file in the root BE directory with the following structure:
-    ```sh
-    DB_CONN = "mysql+pymysql://user:password@host:port/expirypal"
-    # Replace user, password, host, and port according to your MySQL configuration.
-    ML_URL = "your_MachineLearning_url_here"
-    JWT_SECRET_KEY = "JWT_SECRET_KEY"
-    HASS_API_KEY = 'HOME_ASSISTANT_API_KEY'
-    HASS_BASE_URL = 'https://hass.mdu-smartroom.se'
-    CLOUDINARY_CLOUD_NAME = "CLOUDINARY_CLOUD_NAME"
-    CLOUDINARY_API_KEY = "CLOUDINARY_API_KEY"
-    CLOUDINARY_API_SECRET = "CLOUDINARY_API_SECRET"
-    ```
 - Create a `project-name-firebase-adminsdk.json` file in the be/secret directory with the following structure:
     ```sh
    {
@@ -61,11 +49,23 @@ Inside the `/be` folder:
   "auth_provider_x509_cert_url": "*******",
   "client_x509_cert_url": "*******",
   "universe_domain": "*******"
-}
-
+    }
+    ```
 - [Steps to download project-name-firebase-adminsdk.json](#steps-to-download-project-name-firebase-adminsdk-json)
 
-
+- Create a `.env` file in the root BE directory with the following structure:
+    ```sh
+    DB_CONN = "mysql+pymysql://user:password@host:port/expirypal"
+    # Replace user, password, host, and port according to your MySQL configuration.
+    ML_URL = "your_MachineLearning_url_here"
+    JWT_SECRET_KEY = "JWT_SECRET_KEY"
+    HASS_API_KEY = 'HOME_ASSISTANT_API_KEY'
+    HASS_BASE_URL = 'https://hass.mdu-smartroom.se'
+    CLOUDINARY_CLOUD_NAME = "CLOUDINARY_CLOUD_NAME"
+    CLOUDINARY_API_KEY = "CLOUDINARY_API_KEY"
+    CLOUDINARY_API_SECRET = "CLOUDINARY_API_SECRET"
+    FIREBASE_CRED_PATH = ../secret/project-name-firebase-adminsdk.json
+    ```
 > If necessary, delete the migrations folder (only if the migration doesn't run properly).
 - Run the following command to prepare the migration:
     ```sh
@@ -191,8 +191,3 @@ If you cannot activate the Python environment and encounter an ExecutionPolicy e
 
     --The file project-name-firebase-adminsdk.json will be downloaded automatically.
 4. Move this file to your project directory be/secret.
-5. Add to .gitignore
-
-    NOTE: Ensure that the file is listed in your .gitignore to prevent accidental uploads to the repository.
-
-  

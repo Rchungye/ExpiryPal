@@ -3,10 +3,21 @@ from src import app, scheduler, db
 import firebase_admin
 from firebase_admin import credentials, messaging
 import os
+from dotenv import load_dotenv
+from firebase_admin import credentials
+import firebase_admin
+load_dotenv()
+
+# Get the path from the environment variable
+firebase_cred_path = os.getenv("FIREBASE_CRED_PATH")
+if not firebase_cred_path:
+    raise EnvironmentError("FIREBASE_CRED_PATH is not defined in the .env file.")
+# Resolve the full path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-cred_path = os.path.join(current_dir, "../secret/expirypalnotifications-firebase-adminsdk-nfft8-d43dbaa900.json")
+cred_path = os.path.join(current_dir, firebase_cred_path)
 resolved_path = os.path.abspath(cred_path)
-cred = credentials.Certificate(cred_path)
+# Initialize Firebase with the credentials
+cred = credentials.Certificate(resolved_path)
 firebase_admin.initialize_app(cred)
 
 import json
