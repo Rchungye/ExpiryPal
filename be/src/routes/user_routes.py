@@ -132,11 +132,11 @@ def send_notifications():
                         message = messaging.Message(
                             notification=messaging.Notification(
                                 title="Unused Item Alert",
-                                body=f"The item '{item.get("name")}' has not been used for a while."
+                                body=f'The item "{item.get("name")}" has not been used for a while.'
                             ),
                             token=user.fcm_token,
                         )
-                        print(f"UNUSED NOT: Sending notification to user {user.id} for item {item.get("id")}")
+                        print(f'UNUSED NOT: Sending notification to user {user.id} for item {item.get("id")}')
                         messaging.send(message)
 
 @app.route('/getcookies', methods=['GET'])
