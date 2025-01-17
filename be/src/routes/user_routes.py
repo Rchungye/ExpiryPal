@@ -56,7 +56,7 @@ def register_token():
 
     return result
 
-@scheduler.task("interval", id="send_notifications", minutes=0.2)
+@scheduler.task("interval", id="send_notifications", minutes=1)
 def send_notifications():
     print("\n\nChecking if notifications should be sent...")
     with app.app_context():  # Necesario para acceder al contexto de Flask
@@ -148,3 +148,14 @@ def getcookies():
 def checkIfCMFToken():
     data = request.cookies
     return UserController.checkIfCMFToken(data)
+
+@app.route("/user/getUserByAuthToken", methods=['GET'])
+def getUserByAuthToken():
+    data = request.cookies
+    return UserController.getUserByAuthToken(data)
+
+@app.route("/user/updateUsernameByAuthToken", methods=['PUT'])
+def updateUsernameByAuthToken():
+    data = request.get_json()
+    cookies = request.cookies
+    return UserController.updateUsernameByAuthToken(data, cookies)

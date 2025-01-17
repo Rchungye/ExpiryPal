@@ -80,3 +80,65 @@ def checkIfCMFToken(data):
         return jsonify({"error": f"FCM Token for user {user_id} not found"}), 404
     
     return jsonify({"token": FCM_token}), 200
+
+def getUserByAuthToken(data):
+    try:
+        # Decodificar el token JWT
+        decoded = User.decode_jwt(data.get('auth_token'))
+        print("decoded in getUserByAuthToken: ", decoded)
+
+        # Obtener user_id del token decodificado
+        user_id = decoded.get('user_id')
+        print("user_id: ", user_id)
+
+        # Buscar el usuario en la base de datos
+        user = User.query.filter_by(id=user_id).first()
+        if not user:
+            print("User not found")
+            return jsonify({"error": f"User with id {user_id} not found"}), 404
+
+        # Convertir el objeto User en un diccionario serializable
+        user_data = {
+            "id": user.id,
+            "username": user.username,
+        }
+
+        return jsonify(user_data), 200
+    except Exception as e:
+        print("Error in getUserByAuthToken:", str(e))
+        return jsonify({"error": "An error occurred while processing the request"}), 500
+    
+def updateUsernameByAuthToken(data, cookies):
+    try:
+        # Decodificar el token JWT para obtener los datos del usuario
+        decoded = User.decode_jwt(cookies.get('auth_token'))
+        print("decoded in getUserByAuthToken: ", decoded)
+        
+        if not decoded:
+            return jsonify({"error": "Invalid or expired token"}), 401
+        print("Decoded JWT in updateUserNameByAuthToken: ", decoded)
+        # Obtener user_id del token decodificado
+        user_id = decoded.get('user_id')
+        if not user_id:
+            return jsonify({"error": "User ID not found in token"}), 400
+
+        # Buscar el usuario en la base de datos
+        user = User.query.filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"error": f"User with id {user_id} not found"}), 404
+
+        print("data in updateUsernameByAuthToken: ", data)
+        # Obtener el nuevo nombre de usuario del payload
+        new_username = data.get('username')
+        if not new_username:
+            return jsonify({"error": "No username provided"}), 400
+
+        # Actualizar el nombre de usuario
+        user.username = new_username
+        db.session.commit()
+
+        return jsonify({"message": "Username updated successfully", "username": user.username}), 200
+
+    except Exception as e:
+        print("Error while updating username:", str(e))
+        return jsonify({"error": "An error occurred while updating the username"}), 500
