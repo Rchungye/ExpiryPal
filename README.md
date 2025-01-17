@@ -47,7 +47,7 @@ Inside the `/be` folder:
     CLOUDINARY_API_KEY = "CLOUDINARY_API_KEY"
     CLOUDINARY_API_SECRET = "CLOUDINARY_API_SECRET"
     ```
-    - Create a `project-name-firebase-adminsdk.json` file in the be/secret directory with the following structure:
+- Create a `project-name-firebase-adminsdk.json` file in the be/secret directory with the following structure:
     ```sh
    {
   "type": "service_account",
@@ -63,7 +63,7 @@ Inside the `/be` folder:
   "universe_domain": "*******"
 }
 
-    - [Steps to download project-name-firebase-adminsdk.json](#steps-to-download-project-name-firebase-adminsdk-json)
+- [Steps to download project-name-firebase-adminsdk.json](#steps-to-download-project-name-firebase-adminsdk-json)
 
 
 > If necessary, delete the migrations folder (only if the migration doesn't run properly).
