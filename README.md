@@ -47,6 +47,25 @@ Inside the `/be` folder:
     CLOUDINARY_API_KEY = "CLOUDINARY_API_KEY"
     CLOUDINARY_API_SECRET = "CLOUDINARY_API_SECRET"
     ```
+    - Create a `project-name-firebase-adminsdk.json` file in the be/secret directory with the following structure:
+    ```sh
+   {
+  "type": "service_account",
+  "project_id": "firebase_project_id",
+  "private_key_id": "private_key",
+  "private_key": "-----BEGIN PRIVATE KEY-----",
+  "client_email": "firebase-adminsdk-*********.com",
+  "client_id": "*******",
+  "auth_uri": "*******",
+  "token_uri": "*******",
+  "auth_provider_x509_cert_url": "*******",
+  "client_x509_cert_url": "*******",
+  "universe_domain": "*******"
+}
+    - Steps to download [project-name-firebase-adminsdk.json here](#steps-to-download-project-name-firebase-adminsdk-json)
+
+
+    ```
 > If necessary, delete the migrations folder (only if the migration doesn't run properly).
 - Run the following command to prepare the migration:
     ```sh
@@ -149,3 +168,31 @@ If you cannot activate the Python environment and encounter an ExecutionPolicy e
     ```sh
     ./activate
     ```
+
+ ##Steps to Download project-name-firebase-adminsdk.json
+--Access Firebase Console
+
+--Go to Firebase Console: https://console.firebase.google.com.
+--Log in with your Google account.
+--Select Your Project
+
+--Click on your project (e.g., ExpiryPal).
+--Go to Project Settings
+
+--In the left-hand menu, select Project Settings.
+--Navigate to "Service Accounts" Tab
+
+--At the top of the settings page, click the Service Accounts tab.
+--Generate a New Private Key
+
+--Click on Generate new private key.
+--A confirmation popup will appear. Click Generate Key.
+--Download the JSON File
+
+--The file project-name-firebase-adminsdk.json will be downloaded automatically.
+--Move this file to your project directory be/secret.
+--Add to .gitignore
+
+--Ensure that the file is listed in your .gitignore to prevent accidental uploads to the repository.
+
+  
