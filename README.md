@@ -193,6 +193,6 @@ If you cannot activate the Python environment and encounter an ExecutionPolicy e
 4. Move this file to your project directory be/secret.
 5. Add to .gitignore
 
---Ensure that the file is listed in your .gitignore to prevent accidental uploads to the repository.
+    NOTE: Ensure that the file is listed in your .gitignore to prevent accidental uploads to the repository.
 
   
