@@ -169,7 +169,7 @@ If you cannot activate the Python environment and encounter an ExecutionPolicy e
     ./activate
     ```
 
- ##Steps to Download project-name-firebase-adminsdk.json
+ ## Steps to Download project-name-firebase-adminsdk.json
 --Access Firebase Console
 
 --Go to Firebase Console: https://console.firebase.google.com.
