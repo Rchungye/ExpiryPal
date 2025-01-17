@@ -1,31 +1,50 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getFridgeLog } from "../services/fridge"; // Import API function
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faEdit } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faEdit, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { getFridgeLog } from "../services/fridge"; // Import API function
+import { getUserByAuthToken, updateUsername } from "../services/user"; // Import API function
 
 const Log = () => {
   const navigate = useNavigate();
   const [logs, setLogs] = useState([]); //Store fetched logs
   const [loading, setLoading] = useState(true); //Track loading state
-  const fridgeId = 1; //Replace with dynamic fridge ID if necessary
+  const [username, setUsername] = useState(""); // Store username
+  const [isEditing, setIsEditing] = useState(false); // Track edit state
+  const fridgeId = 1; // Replace with dynamic fridge ID if necessary  
 
   useEffect(() => {
-    //Fetch logs from the backend
-    const fetchLogs = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getFridgeLog(fridgeId);
-        const { logs } = response.data.payload; //Extract logs from payload
-        console.log(logs);
+        const [logResponse, userResponse] = await Promise.all([
+          getFridgeLog(fridgeId),
+          getUserByAuthToken(),
+        ]);
+        console.log("userResponse:", userResponse.data.username);
+        const { logs } = logResponse.data.payload;
         setLogs(logs);
+
+        const  username  = userResponse.data.username;
+        setUsername(username);
       } catch (error) {
-        console.error("Failed to fetch fridge logs:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchLogs();
+    fetchData();
   }, [fridgeId]);
+
+   // Handle username edit submission
+   const handleUsernameUpdate = async () => {
+    try {
+      const response = await updateUsername(username); // Update username in the backend
+      console.log("Username updated:", response);
+      setIsEditing(false); // Exit edit mode
+    } catch (error) {
+      console.error("Failed to update username:", error);
+    }
+  };
 
   if (loading) {
     return <p className="text-center text-gray-500">Loading logs...</p>;
@@ -47,8 +66,22 @@ const Log = () => {
         <div className="p-4">
           <p className="text-sm text-gray-700">
             Your unique ID:{" "}
-            <span className="font-bold text-[#285D85]">Petar2</span>
-            <span className="text-[#285D85] ml-1 cursor-pointer"><FontAwesomeIcon icon={faEdit} /></span>
+            {isEditing ? (
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="border-b border-gray-400 focus:outline-none"
+              />
+            ) : (
+              <span className="font-bold text-[#285D85]">{username}</span>
+            )}
+            <span
+              className="text-[#285D85] ml-1 cursor-pointer"
+              onClick={() => (isEditing ? handleUsernameUpdate() : setIsEditing(true))}
+            >
+              {isEditing ? <FontAwesomeIcon icon={faCheck} /> : <FontAwesomeIcon icon={faEdit} />}
+            </span>
           </p>
         </div>
         {/* Log List */}

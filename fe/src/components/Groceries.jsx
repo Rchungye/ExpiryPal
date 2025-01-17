@@ -9,10 +9,9 @@ import { faBell, faX, faBars } from "@fortawesome/free-solid-svg-icons";
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
-import { generateToken, messaging } from "../notifications/firebase";
+import { generateToken } from "../notifications/firebase";
 import { getCookies, saveNotificationPreferences } from "../services/api"; // Adjust the import path as necessary
 import { checkUserLink, checkIfCMFToken } from "../services/api";
-import { onMessage } from "firebase/messaging";
 
 function Groceries() {
 
@@ -20,8 +19,7 @@ function Groceries() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [items, setItems] = useState([]);
-  const [isVerified, setIsVerified] = useState(false);
-  const [cookies, setCookies] = useState([]);
+  const [isVerified, setIsVerified] =  useState(false);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
 
   const [notificationPreferences, setNotificationPreferences] = useState({
@@ -59,11 +57,9 @@ function Groceries() {
         const response = await getCookies();
         console.log("Cookies:", response);
         if (response['status'] === 200) {
-          setCookies(response);
           setIsVerified(true);
         } else {
           setIsVerified(false);
-          setCookies([]);
         }
       } catch (error) {
         console.error("Error getting cookies:", error);

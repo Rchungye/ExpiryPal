@@ -103,7 +103,7 @@ function Welcome() {
     // Filtrar NotFoundException para no loguear continuamente
     if (error.name !== "NotFoundException") {
       console.error("QR Scan Error:", error);
-      setDebugText("Error scanning QR code. Please try again.");
+      setDebugText(" Please try again.");
     }
   };
   
