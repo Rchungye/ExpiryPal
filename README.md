@@ -1,6 +1,6 @@
 # ExpiryPal
 
-ExpiryPal is a system designed to help users manage their stored groceries and reduce food waste by tracking expiration dates. The platform combines a user-friendly interface, backend services, machine learning and FCM to deliver timely notifications and updates about grocery item
+ExpiryPal is a system designed to help users manage their stored groceries and reduce food waste by tracking expiration dates. The platform combines a user-friendly interface, backend services, machine learning and FCM to deliver timely notifications 
 
 ## Technologies Used
 
