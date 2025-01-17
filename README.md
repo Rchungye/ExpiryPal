@@ -62,7 +62,9 @@ Inside the `/be` folder:
   "client_x509_cert_url": "*******",
   "universe_domain": "*******"
 }
-    - Steps to download [project-name-firebase-adminsdk.json here](#steps-to-download-project-name-firebase-adminsdk-json)
+    ```
+
+    - [Steps to download project-name-firebase-adminsdk.json](#steps-to-download-project-name-firebase-adminsdk-json)
 
 
     ```
