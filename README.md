@@ -62,12 +62,10 @@ Inside the `/be` folder:
   "client_x509_cert_url": "*******",
   "universe_domain": "*******"
 }
-    ```
 
     - [Steps to download project-name-firebase-adminsdk.json](#steps-to-download-project-name-firebase-adminsdk-json)
 
 
-    ```
 > If necessary, delete the migrations folder (only if the migration doesn't run properly).
 - Run the following command to prepare the migration:
     ```sh
